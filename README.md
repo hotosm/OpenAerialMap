@@ -1,6 +1,8 @@
 OpenAerialMap (OAM)
 ===
 
+[![Join the chat at https://gitter.im/hotosm/OpenAerialMap](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/hotosm/OpenAerialMap?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Imagery from satellites, unmanned aerial vehicles (UAVs) and other aircraft is becoming increasingly available after a disaster. It is often difficult to determine what is available and easily access it. OpenAerialMap (OAM) seeks to solve this by providing a **simple open way to host and provide access to imagery** for humanitarian response and disaster preparedness.
 
 There have been multiple tries to start OpenAerialMap in the past. This current interation is lead by the [Humanitarian OpenStreetMap Team](http://hot.openstreetmap.org) through the gracious support of the [Humanitarian Innovation Fund](http://www.humanitarianinnovation.org/large-project/OpenAerialMap).
