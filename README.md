@@ -7,4 +7,6 @@ There have been multiple tries to start OpenAerialMap in the past. This current 
 
 Please head over to the [wiki](https://github.com/hotosm/OpenAerialMap/wiki) to learn about current development, submit ideas in the [issues](https://github.com/hotosm/OpenAerialMap/issues) section, and contribute code through [pull requests](https://github.com/hotosm/OpenAerialMap/pulls).
 
-Communication about the project currently happens on the [OAM-Talk mailing list](https://groups.google.com/a/hotosm.org/forum/#!forum/openaerialmap). Please join the discussion and share your ideas.
+Communication about the project currently happens on the [OAM-Talk mailing list](https://groups.google.com/a/hotosm.org/forum/#!forum/openaerialmap) and on [Gitter](https://gitter.im/hotosm/OpenAerialMap?). Please join the discussion and share your ideas.  
+
+[![Join the chat at https://gitter.im/hotosm/OpenAerialMap](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/hotosm/OpenAerialMap?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  
