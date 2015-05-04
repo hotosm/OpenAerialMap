@@ -1,0 +1,12 @@
+{
+  "title" : "An scene from some satellite",
+  "projection" : "EPSG:4326",
+  "bbox" : [-180,-90,180,90],
+  "footprint" : "POLYGON((-180 -90, -180 90, 180 90, 180 -90, -180 -90))",
+  "gsd" : 0.35,
+  "file_size" : 1024,
+  "sense_start" : "2015-05-03T13:00:00.000",
+  "sense_end" : "2015-05-04T13:00:00.000",
+  "platform" : "satellite",
+  "contact" : "someone@nasa.gov"
+}
