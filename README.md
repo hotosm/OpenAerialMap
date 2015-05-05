@@ -6,6 +6,15 @@ Imagery from satellites, unmanned aerial vehicles (UAVs) and other aircraft is b
 
 There have been multiple tries to start OpenAerialMap in the past. This current interation is lead by the [Humanitarian OpenStreetMap Team](http://hot.openstreetmap.org) through the gracious support of the [Humanitarian Innovation Fund](http://www.humanitarianinnovation.org/large-project/OpenAerialMap).
 
+## Repositories 
+
+The following repositories are part of the OAM project:
+
+| | |
+| --- | --- |
+| [oam-catalog]() | Catalog for indexing open imagery | 
+| [oam-browser]() | Imagery browser for searching available imagery |
+
 ## Getting Involved
 
 There are plenty of ways to get involved in OpenAerialMap! First of all, if
