@@ -2,6 +2,8 @@
 
 This folder contains the specification of metadata that will be used for Open Imagery Network and OpenAerialMap.
 
+A metadata file is required for each "image" file. An image file is an RGB GeoTIFF.
+
 Below is a table of metadata values and where they would be required:
 
 | Element       | Type         | Sample Value                                            | Description                                                                                           | OIN      | OAM      | Apply to TMS? |
