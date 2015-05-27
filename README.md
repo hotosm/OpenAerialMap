@@ -12,8 +12,8 @@ The following repositories are part of the OAM project:
 
 | | |
 | --- | --- |
-| [oam-catalog]() | Catalog for indexing open imagery | 
-| [oam-browser]() | Imagery browser for searching available imagery |
+| [oam-catalog](https://github.com/hotosm/oam-browser) | Catalog for indexing open imagery | 
+| [oam-browser](https://github.com/hotosm/oam-catalog) | Imagery browser for searching available imagery |
 
 ## Getting Involved
 
