@@ -10,11 +10,11 @@ There have been multiple tries to start OpenAerialMap in the past. This current 
 
 The following repositories are part of the OAM project:
 
-| | |
-| --- | --- |
-| [oam-catalog](https://github.com/hotosm/oam-catalog) | Catalog for indexing open imagery | 
-| [oam-browser](https://github.com/hotosm/oam-browser) | Imagery browser for searching available imagery |
-| [oam-server](https://github.com/hotosm/oam-server) | Imagery processing and tile service creation |
+| | | |
+| --- | --- | --- |
+| [![Build Status](https://travis-ci.org/hotosm/oam-catalog.svg)](https://travis-ci.org/hotosm/oam-catalog) | [oam-catalog](https://github.com/hotosm/oam-catalog) | Catalog for indexing open imagery | 
+| [![Build Status](https://travis-ci.org/hotosm/oam-browser.svg?branch=master)](https://travis-ci.org/hotosm/oam-browser) | [oam-browser](https://github.com/hotosm/oam-browser) | Imagery browser for searching available imagery |
+|| [oam-server](https://github.com/hotosm/oam-server) | Imagery processing and tile service creation |
 
 ## Getting Involved
 
