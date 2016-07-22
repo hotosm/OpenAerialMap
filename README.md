@@ -4,8 +4,6 @@ OpenAerialMap (OAM)
 ## What is OpenAerialMap?
 Imagery from satellites, unmanned aerial vehicles (UAVs) and other aircraft is becoming increasingly available after a disaster. It is often difficult to determine what is available and easily access it. OpenAerialMap (OAM) seeks to solve this by providing a **simple open way to host and provide access to imagery** for humanitarian response and disaster preparedness.
 
-There have been multiple tries to start OpenAerialMap in the past. This current interation is lead by the [Humanitarian OpenStreetMap Team](http://hot.openstreetmap.org) through the gracious support of the [Humanitarian Innovation Fund](http://www.humanitarianinnovation.org/large-project/OpenAerialMap).
-
 ## Repositories 
 
 The following repositories are part of the OAM project:
@@ -14,24 +12,39 @@ The following repositories are part of the OAM project:
 | --- | --- |
 | [oam-catalog](https://github.com/hotosm/oam-catalog) | Catalog for indexing open imagery | 
 | [oam-browser](https://github.com/hotosm/oam-browser) | Imagery browser for searching available imagery |
-| [oam-server](https://github.com/hotosm/oam-server) | Imagery processing and tile service creation |
+| [oam-browser-filters](https://github.com/hotosm/oam-browser-filters) | The grid filters used by the oam-browser front end |
+| [oam-uploader](https://github.com/hotosm/oam-uploader) | The web frontend to the OAM Uploader API |
+| [oam-uploader-admin](https://github.com/hotosm/oam-uploader-admin) | OAM uploader admin interface |
+| [oam-uploader-api](https://github.com/hotosm/oam-uploader-api) | The OAM Uploader API server |
+| [oam-server](https://github.com/hotosm/oam-server) | Main repository for imagery processing and tile service creation tools |
+| [oam-server-tiler](https://github.com/hotosm/oam-server-tiler) | OAM Server tile engine |
+| [oam-server-api](https://github.com/hotosm/oam-server-api) | OAM Server API |
+| [oam-server-cli](https://github.com/hotosm/oam-server-cli) | A command line utility for interacting with the OAM Server API |
+| [oam-server-deployment](https://github.com/hotosm/oam-server-deployment) | Amazon Web Services deployment tooling OAM Server |
+| [oam-server-publisher](https://github.com/hotosm/oam-server-publisher) | Status publishing component of OAM Server |
+| [oam-catalog-grid](https://github.com/hotosm/oam-catalog-grid) | Generate a vector tile grid from the OAM catalog |
+| [oam-server-activities](https://github.com/hotosm/oam-server-activities) | DEPRECATED: SWFR Activities component for OAM Server |
+| [oam-server-decider](https://github.com/hotosm/oam-server-decider) | DEPRECATED: SWF Decider component of OAM Server (using oam-server-tiler instead) |
+| [openaerialmap.org](https://github.com/hotosm/openaerialmap.org) | Code for the OpenAerialMap.org Website |
+| [oam-qgis-plugin](https://github.com/hotosm/oam-qgis-plugin) | An experimental plugin for QGIS to access OAM |
+| [oam-status](https://github.com/hotosm/oam-status) | A simple status dashboard for oam-catalog |
+| [oam-design-system](https://github.com/hotosm/oam-design-system) | Style guide and UI components library |
+| [oam-docs](https://github.com/hotosm/oam-docs) | OAM Documentation |
+
 
 ## Getting Involved
 
 There are plenty of ways to get involved in OpenAerialMap! First of all, if
 you're new to the project and want to learn a bit more about its current
 design and architecture, head over to the
-[wiki](https://github.com/hotosm/OpenAerialMap/wiki) for an overview.
+[docs](http://docs.openaerialmap.org/) for an overview.
 
-### Discussions
+### Ideas, Issue and Discussions
 
-The best place to jump into discussions about OpenAerialMap is on the [issue
-tracker](https://github.com/hotosm/OpenAerialMap/issues).  In particular, that's
-where you can find all key ongoing discussions and decisions about the project,
-tagged with the
-[discussion](https://github.com/hotosm/OpenAerialMap/labels/discussion) label.
+The best place to jump into discussions about OpenAerialMap is on the main [issue
+tracker](https://github.com/hotosm/OpenAerialMap/issues) or individual ones for repos listed above.
 
-Smaller conversations also take place in the project's
+Ongoing and past converations about the project take place in the project's
 [Gitter](https://gitter.im/hotosm/OpenAerialMap?) chat room, and periodic
 updates go out on the [OAM-Talk mailing
 list](https://groups.google.com/a/hotosm.org/forum/#!forum/openaerialmap).)
