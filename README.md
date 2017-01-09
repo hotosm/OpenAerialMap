@@ -18,6 +18,7 @@ The following repositories are part of the OAM project:
 | [oam-uploader-api](https://github.com/hotosm/oam-uploader-api) | The OAM Uploader API server |
 | [oam-server](https://github.com/hotosm/oam-server) | Main repository for imagery processing and tile service creation tools |
 | [oam-server-tiler](https://github.com/hotosm/oam-server-tiler) | OAM Server tile engine |
+| [oam-dynamic-tiler](https://github.com/hotosm/oam-dynamic-tiler) | Python, Flask and Lambda-based dynamic tiler for S3-hosted GeoTIFFs
 | [oam-server-api](https://github.com/hotosm/oam-server-api) | OAM Server API |
 | [oam-server-cli](https://github.com/hotosm/oam-server-cli) | A command line utility for interacting with the OAM Server API |
 | [oam-server-deployment](https://github.com/hotosm/oam-server-deployment) | Amazon Web Services deployment tooling OAM Server |
