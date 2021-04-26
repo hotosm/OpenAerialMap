@@ -14,11 +14,18 @@ The following repositories are part of the OAM project:
 | [oam-browser](https://github.com/hotosm/oam-browser) | Imagery browser for searching available imagery |
 | [oam-uploader](https://github.com/hotosm/oam-uploader) | The web frontend to the OAM Uploader API |
 | [oam-uploader-api](https://github.com/hotosm/oam-uploader-api) | The OAM Uploader API server |
-| [marblecutter-openaerialmap](https://github.com/mojodna/marblecutter-openaerialmap) | Python, Flask and Lambda-based dynamic tiler for S3-hosted GeoTIFFs |
-| [oam-qgis-plugin](https://github.com/yojiyojiyoji/oam_qgis3_express) | An experimental plugin for QGIS v3 to access OAM |
 | [openaerialmap.org](https://github.com/hotosm/openaerialmap.org) | Code for the OpenAerialMap.org Website |
 | [oam-design-system](https://github.com/hotosm/oam-design-system) | Style guide and UI components library |
 | [oam-docs](https://github.com/hotosm/oam-docs) | OAM Documentation |
+
+
+Repositories maintained outside of the HOT Github:
+
+| | |
+| --- | --- |
+| [marblecutter-openaerialmap](https://github.com/mojodna/marblecutter-openaerialmap) | Python, Flask and Lambda-based dynamic tiler for S3-hosted GeoTIFFs |
+| [oam-qgis-plugin](https://github.com/yojiyojiyoji/oam_qgis3_express) | An experimental plugin for QGIS v3 to access OAM |
+
 
 ### Deprecated repositories
 
