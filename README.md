@@ -10,7 +10,7 @@ The following repositories are part of the OAM project:
 
 | | |
 | --- | --- |
-| [oam-catalog](https://github.com/hotosm/oam-catalog) | Catalog for indexing open imagery | 
+| [oam-api](https://github.com/hotosm/oam-api) | Catalog for indexing open imagery | 
 | [oam-browser](https://github.com/hotosm/oam-browser) | Imagery browser for searching available imagery |
 | [oam-uploader](https://github.com/hotosm/oam-uploader) | The web frontend to the OAM Uploader API |
 | [oam-uploader-api](https://github.com/hotosm/oam-uploader-api) | The OAM Uploader API server |
