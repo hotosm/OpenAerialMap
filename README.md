@@ -13,12 +13,10 @@ The following repositories are part of the OAM project:
 | [oam-catalog](https://github.com/hotosm/oam-catalog) | Catalog for indexing open imagery | 
 | [oam-browser](https://github.com/hotosm/oam-browser) | Imagery browser for searching available imagery |
 | [oam-uploader](https://github.com/hotosm/oam-uploader) | The web frontend to the OAM Uploader API |
-| [oam-uploader-admin](https://github.com/hotosm/oam-uploader-admin) | OAM uploader admin interface |
 | [oam-uploader-api](https://github.com/hotosm/oam-uploader-api) | The OAM Uploader API server |
-| [oam-dynamic-tiler](https://github.com/hotosm/oam-dynamic-tiler) | Python, Flask and Lambda-based dynamic tiler for S3-hosted GeoTIFFs
+| [marblecutter-openaerialmap](https://github.com/mojodna/marblecutter-openaerialmap) | Python, Flask and Lambda-based dynamic tiler for S3-hosted GeoTIFFs |
+| [oam-qgis-plugin](https://github.com/yojiyojiyoji/oam_qgis3_express) | An experimental plugin for QGIS v3 to access OAM |
 | [openaerialmap.org](https://github.com/hotosm/openaerialmap.org) | Code for the OpenAerialMap.org Website |
-| [oam-qgis-plugin](https://github.com/hotosm/oam-qgis-plugin) | An experimental plugin for QGIS to access OAM |
-| [oam-status](https://github.com/hotosm/oam-status) | A simple status dashboard for oam-catalog |
 | [oam-design-system](https://github.com/hotosm/oam-design-system) | Style guide and UI components library |
 | [oam-docs](https://github.com/hotosm/oam-docs) | OAM Documentation |
 
@@ -36,6 +34,10 @@ The following repositories are part of the OAM project:
 | [oam-server-publisher](https://github.com/hotosm/oam-server-publisher) | Status publishing component of OAM Server |
 | [oam-catalog-grid](https://github.com/hotosm/oam-catalog-grid) | Generate a vector tile grid from the OAM catalog |
 | [oam-browser-filters](https://github.com/hotosm/oam-browser-filters) | The grid filters used by the oam-browser front end |
+| [oam-uploader-admin](https://github.com/hotosm/oam-uploader-admin) | OAM uploader admin interface |
+| [oam-status](https://github.com/hotosm/oam-status) | A simple status dashboard for oam-catalog |
+| [oam-dynamic-tiler](https://github.com/hotosm/oam-dynamic-tiler) | Python, Flask and Lambda-based dynamic tiler for S3-hosted GeoTIFFs
+| [oam-qgis-plugin](https://github.com/hotosm/oam-qgis-plugin) | An experimental plugin for QGIS to access OAM |
 
 ## Getting Involved
 
