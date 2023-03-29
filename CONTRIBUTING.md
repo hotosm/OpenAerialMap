@@ -1,17 +1,27 @@
-First off, THANK YOU for considering to contribute to the OpenAerialMap repository. Every contribution is valuable and helps improve our tools. Don't forget to review the Code of Conduct before contributing!
+Welcome to the OpenAerialMap repository, and thank you for considering to contribute to our project!
+
+OpenAerialMap is a community-driven project that aims to provide free and open access to high-quality aerial imagery for humanitarian and development purposes. Every contribution, big or small, can make a difference in achieving this goal.
+
+Before you start, please take a moment to review our Code of Conduct, which outlines our expectations for respectful and inclusive behavior within the community.
 
 ### Reporting Issues
-If you encounter any issues or bugs while using OAM, please check our [GitHub issue tracker](https://github.com/hotosm/OpenAerialMap/issues), for there might be an open issue addressing the bug. If you don't find one, you can open an issue. Please include as much detail as possible, including steps to reproduce the issue and any relevant error messages.
+
+If you encounter any issues or bugs while using OpenAerialMap, please check our [GitHub issue tracker](https://github.com/hotosm/OpenAerialMap/issues) to see if a similar issue has already been reported. If not, please feel free to create a new issue. Please provide as much detail as possible, including steps to reproduce the issue and any relevant error messages.
+
+When reporting an issue, please ensure that it is directed to the relevant sub-repository as OpenAerialMap has several (sub-repositories)[https://github.com/hotosm/OpenAerialMap#repositories] that serve different purposes.
 
 ### Contributing Code
+
 Here are the steps to contribute to the OpenAerialMap:
 
 #### 1. Fork the repository
+
 Fork creates a copy of the repository in your own GitHub account.
 Go to the [OpenAerialMap repository](https://github.com/hotosm/OpenAerialMap) and click the "Fork" button in the top right corner of the page.
 
 
 #### 2. Clone the forked repository
+
 Clone the forked repository to your local machine using the following command:
 
 
@@ -22,6 +32,7 @@ Make sure to replace <your-username> with your GitHub username.
 
 
 #### 3. Create a new branch
+  
 Create a new branch for your changes using the following command:
 
 
@@ -32,10 +43,12 @@ Make sure to give your branch a descriptive name that reflects the changes you'l
 
 
 #### 4. Make changes
+  
 Make your changes to the codebase.
 
 
 #### 5. Commit and push
+  
 Once you've made and tested your changes, commit them to your local branch using the following command:
 
 
