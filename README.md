@@ -21,8 +21,8 @@ Repositories maintained outside of the HOT Github:
 
 | | |
 | --- | --- |
-| [marblecutter-openaerialmap](https://github.com/mojodna/marblecutter-openaerialmap) | Python, Flask and Lambda-based dynamic tiler for S3-hosted GeoTIFFs |
-| [oam-qgis-plugin](https://github.com/yojiyojiyoji/oam_qgis3_express) | An experimental plugin for QGIS v3 to access OAM |
+| [mojodna/marblecutter-openaerialmap](https://github.com/mojodna/marblecutter-openaerialmap) | Python, Flask and Lambda-based dynamic tiler for S3-hosted GeoTIFFs |
+| [yojiyojiyoji/oam_qgis3_express](https://github.com/yojiyojiyoji/oam_qgis3_express) | An experimental plugin for QGIS v3 to access OAM |
 
 
 ### Deprecated repositories
