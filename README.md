@@ -66,8 +66,3 @@ list](https://groups.google.com/a/hotosm.org/forum/#!forum/openaerialmap).)
 Please come join the discussion and share your ideas!
 
 [![Join the chat at https://gitter.im/hotosm/OpenAerialMap](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/hotosm/OpenAerialMap?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  
-
-### Product Roadmap
-We have included below a reference to OAM Product Roadmap [subject to change]. We hope it is a useful reference for anyone wanting to get involved.
-![image](https://user-images.githubusercontent.com/98902727/218772260-a0d7d4cf-bd1b-46f1-83e3-d4ba44aeaf4d.png)
-
