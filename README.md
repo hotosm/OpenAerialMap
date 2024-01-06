@@ -12,8 +12,6 @@ The following repositories are part of the OAM project:
 | --- | --- |
 | [oam-api](https://github.com/hotosm/oam-api) | Catalog for indexing open imagery | 
 | [oam-browser](https://github.com/hotosm/oam-browser) | Imagery browser for searching available imagery |
-| [oam-uploader](https://github.com/hotosm/oam-uploader) | The web frontend to the OAM Uploader API |
-| [oam-uploader-api](https://github.com/hotosm/oam-uploader-api) | The OAM Uploader API server |
 | [oam-docs](https://github.com/hotosm/oam-docs) | OAM Documentation |
 | [openaerialmap.org](https://github.com/hotosm/openaerialmap.org) | Code for the OpenAerialMap.org Website |
 | [oam-design-system](https://github.com/hotosm/oam-design-system) | Style guide and UI components library |
@@ -23,14 +21,16 @@ Repositories maintained outside of the HOT Github:
 
 | | |
 | --- | --- |
-| [marblecutter-openaerialmap](https://github.com/mojodna/marblecutter-openaerialmap) | Python, Flask and Lambda-based dynamic tiler for S3-hosted GeoTIFFs |
-| [oam-qgis-plugin](https://github.com/yojiyojiyoji/oam_qgis3_express) | An experimental plugin for QGIS v3 to access OAM |
+| [mojodna/marblecutter-openaerialmap](https://github.com/mojodna/marblecutter-openaerialmap) | Python, Flask and Lambda-based dynamic tiler for S3-hosted GeoTIFFs |
+| [yojiyojiyoji/oam_qgis3_express](https://github.com/yojiyojiyoji/oam_qgis3_express) | An experimental plugin for QGIS v3 to access OAM |
 
 
 ### Deprecated repositories
 
 | | |
 | --- | --- |
+| [oam-uploader-api](https://github.com/hotosm/oam-uploader-api) | The OAM Uploader API server |
+| [oam-uploader](https://github.com/hotosm/oam-uploader) | The web frontend to the OAM Uploader API |
 | [oam-server](https://github.com/hotosm/oam-server) | Main repository for imagery processing and tile service creation tools |
 | [oam-server-tiler](https://github.com/hotosm/oam-server-tiler) | OAM Server tile engine |
 | [oam-server-activities](https://github.com/hotosm/oam-server-activities) | SWFR Activities component for OAM Server |
