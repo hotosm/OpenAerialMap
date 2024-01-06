@@ -1,8 +1,34 @@
 OpenAerialMap (OAM)
 ===
 
-## What is OpenAerialMap?
-Imagery from satellites, unmanned aerial vehicles (UAVs) and other aircraft is becoming increasingly available after a disaster. It is often difficult to determine what is available and easily access it. OpenAerialMap (OAM) seeks to solve this by providing a **simple open way to host and provide access to imagery** for humanitarian response and disaster preparedness.
+OpenAerialMap (OAM) is an open-source platform that provides a simple and open way to host, share, and access high-resolution aerial imagery from various sources, including satellites, drones, and other aircraft. The platform is designed to make it easier for humanitarian organizations, disaster response teams, and researchers to access and use aerial imagery for a wide range of applications, including disaster response, urban planning, environmental monitoring, and more.
+
+## Getting Started
+To get started with OpenAerialMap (OAM), you will need to install the OAM software on your computer or server. The easiest way to install OAM is to use Docker, which will handle all the dependencies and configurations for you.
+
+### Installing OAM with Docker
+To install OAM with Docker, follow these steps:
+
+- Install Docker on your computer or server
+You can download Docker from the official website: https://www.docker.com/get-started
+
+- Clone the OAM repository from GitHub:
+
+    `git clone https://github.com/hotosm/OpenAerialMap.git`
+ 
+- Change into the OpenAerialMap directory:
+
+    `cd OpenAerialMap`
+    
+- Build the Docker container:
+
+    `docker-compose build`
+    
+- Start the Docker container:
+
+    `docker-compose up`
+  
+Open your web browser and go to http://localhost:8080. You should see the OAM landing page.
 
 ## Repositories 
 
