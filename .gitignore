@@ -71,3 +71,4 @@ tmp
 dist
 parcel-bundle-reports
 **/.claude/settings.local.json
+.env
