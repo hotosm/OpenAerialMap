@@ -13,12 +13,12 @@ import SlSelect from '@shoelace-style/shoelace/dist/react/select/index.js';
 import SlOption from '@shoelace-style/shoelace/dist/react/option/index.js';
 import type { SlChangeEvent } from '@shoelace-style/shoelace/dist/react/select/index.js';
 import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select.js';
-import { StacFeatureCollection } from '../types/stac';
+import { useStac } from '../context/StacContext';
 
-interface CollectionDropdownProps {
-  collections: StacCollection[];
-  onSelect: (id: string) => void;
-}
+function CollectionDropdown() {
+  const { availableCollections, handleSelectCollection } = useStac();
+
+  if (!availableCollections) return null;
 
 function CollectionDropdown({
   collections,
@@ -33,7 +33,7 @@ function CollectionDropdown({
       const value = Array.isArray(select.value)
         ? select.value[0]
         : select.value;
-      onSelect(value);
+      handleSelectCollection(value);
     }
   };
   return (
@@ -44,9 +44,9 @@ function CollectionDropdown({
         style={{ width: '100%' }}
         onSlChange={(event) => handleChange(event, onSelect)}
       >
-        {collections.map((collection) => (
+        {availableCollections.map((collection) => (
           <SlOption key={`collection-${collection.id}`} value={collection.id}>
-            {collection.description}
+            {collection.title}
           </SlOption>
         ))}
       </SlSelect>
@@ -206,10 +206,7 @@ export default function Sidebar({
           <Box>
             <Text fontWeight='bold'>Collections:</Text>
             <Box marginTop='2'>
-              <CollectionDropdown
-                collections={availableCollections}
-                onSelect={handleSelectCollection}
-              />
+              <CollectionDropdown />
             </Box>
           </Box>
         </VStack>

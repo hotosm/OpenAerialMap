@@ -1,4 +1,3 @@
-// import { ChakraProvider, Flex } from '@chakra-ui/react';
 import React, { useEffect, useRef } from 'react';
 import maplibregl, { LngLatBoundsLike, RasterTileSource } from 'maplibre-gl';
 import { RASTER_API_PATH, useStacItems } from '$hooks/useStacCatalog';
