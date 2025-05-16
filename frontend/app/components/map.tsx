@@ -1,8 +1,18 @@
-// import { ChakraProvider, Flex } from '@chakra-ui/react';
 import React, { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
+import { useStac } from '../context/StacContext';
 
 export default function MapComponent() {
+  // Import the STAC context
+  useStac();
+
+  // In the future, we could add an effect that uses the STAC data
+  // useEffect(() => {
+  //   const { stacItems } = useStac();
+  //   if (map.current && stacItems?.features) {
+  //     // Add features to map
+  //   }
+  // }, []);
   const map = useRef<maplibregl.Map | null>(null);
 
   useEffect(() => {

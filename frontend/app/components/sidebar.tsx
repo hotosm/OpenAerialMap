@@ -8,29 +8,24 @@ import {
   SimpleGrid
 } from '@chakra-ui/react';
 import React from 'react';
-import type { StacCollection } from 'stac-ts';
 import SlSelect from '@shoelace-style/shoelace/dist/react/select/index.js';
 import SlOption from '@shoelace-style/shoelace/dist/react/option/index.js';
 import type { SlChangeEvent } from '@shoelace-style/shoelace/dist/react/select/index.js';
 import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select.js';
-import { StacFeatureCollection } from '../types/stac';
+import { useStac } from '../context/StacContext';
 
-interface CollectionDropdownProps {
-  collections: StacCollection[];
-  onSelect: (id: string) => void;
-}
+function CollectionDropdown() {
+  const { availableCollections, handleSelectCollection } = useStac();
 
-function CollectionDropdown({
-  collections,
-  onSelect
-}: CollectionDropdownProps) {
+  if (!availableCollections) return null;
+
   const handleChange = (event: SlChangeEvent) => {
     const select = event.target as SlSelectElement;
     if (select && select.value) {
       const value = Array.isArray(select.value)
         ? select.value[0]
         : select.value;
-      onSelect(value);
+      handleSelectCollection(value);
     }
   };
 
@@ -42,9 +37,9 @@ function CollectionDropdown({
         style={{ width: '100%' }}
         onSlChange={handleChange}
       >
-        {collections.map((collection) => (
+        {availableCollections.map((collection) => (
           <SlOption key={`collection-${collection.id}`} value={collection.id}>
-            {collection.description}
+            {collection.title}
           </SlOption>
         ))}
       </SlSelect>
@@ -52,27 +47,16 @@ function CollectionDropdown({
   );
 }
 
-interface SidebarProps {
-  selectedCollection?: string;
-  availableCollections?: StacCollection[];
-  handleSelectCollection: (id: string) => void;
-  isStacCollectionLoading: boolean;
-  isStacCollectionsError: Error | null;
-  stacItems: StacFeatureCollection | undefined;
-  isStacItemsLoading: boolean;
-  isStacItemsError: Error | null;
-}
-
-export default function Sidebar({
-  selectedCollection,
-  availableCollections,
-  handleSelectCollection,
-  isStacCollectionLoading,
-  isStacCollectionsError,
-  isStacItemsLoading,
-  isStacItemsError,
-  stacItems
-}: SidebarProps) {
+export default function Sidebar() {
+  const {
+    selectedCollection,
+    availableCollections,
+    isStacCollectionLoading,
+    isStacCollectionsError,
+    isStacItemsLoading,
+    isStacItemsError,
+    stacItems
+  } = useStac();
   const renderThumbnail = (url: string, altText: string) => {
     if (!url) return null;
 
@@ -114,10 +98,7 @@ export default function Sidebar({
           <Box>
             <Text fontWeight='bold'>Collections:</Text>
             <Box marginTop='2'>
-              <CollectionDropdown
-                collections={availableCollections}
-                onSelect={handleSelectCollection}
-              />
+              <CollectionDropdown />
             </Box>
           </Box>
         </VStack>
@@ -138,7 +119,7 @@ export default function Sidebar({
       {stacItems && stacItems.features && stacItems.features.length > 0 && (
         <Box marginTop='6'>
           <Heading size='sm' marginBottom='3'>
-            Latest uploads
+            Items
           </Heading>
 
           <SimpleGrid columns={2} gap={4}>

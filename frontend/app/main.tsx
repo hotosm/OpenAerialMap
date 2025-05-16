@@ -5,7 +5,7 @@ setBasePath(
 );
 
 import { ChakraProvider } from '@chakra-ui/react';
-import React, { useState } from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   // useQuery,
@@ -14,11 +14,10 @@ import {
   QueryClient,
   QueryClientProvider
 } from '@tanstack/react-query';
-import { useStacCollections, useStacItems } from '$hooks/useStacCatalog';
-
 import system from './styles/theme';
 import MapComponent from './components/map';
 import Sidebar from './components/sidebar';
+import { StacProvider } from './context/StacContext';
 
 // If using a router add the public url to the base path.
 // const publicUrl = process.env.BASE_URL || '';
@@ -36,39 +35,11 @@ function Root() {
 }
 
 function AppContent() {
-  const [selectedCollection, setSelectedCollection] = useState<
-    string | undefined
-  >();
-  const {
-    data: stacCollections,
-    isLoading: isStacCollectionLoading,
-    error: isStacCollectionsError
-  } = useStacCollections();
-  const availableCollections = stacCollections?.collections;
-  const handleSelectCollection = (id: string) => {
-    setSelectedCollection(id);
-  };
-
-  const {
-    data: stacItems,
-    isLoading: isStacItemsLoading,
-    error: isStacItemsError
-  } = useStacItems(selectedCollection);
-
   return (
-    <>
-      <Sidebar
-        selectedCollection={selectedCollection}
-        availableCollections={availableCollections}
-        handleSelectCollection={handleSelectCollection}
-        isStacCollectionLoading={isStacCollectionLoading}
-        isStacCollectionsError={isStacCollectionsError}
-        stacItems={stacItems}
-        isStacItemsLoading={isStacItemsLoading}
-        isStacItemsError={isStacItemsError}
-      />
+    <StacProvider>
+      <Sidebar />
       <MapComponent />
-    </>
+    </StacProvider>
   );
 }
 
