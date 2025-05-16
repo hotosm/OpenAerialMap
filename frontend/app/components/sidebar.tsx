@@ -5,15 +5,15 @@ import {
   Text,
   VStack,
   Spinner,
-  SimpleGrid,
-} from "@chakra-ui/react";
-import React from "react";
-import type { StacCollection } from "stac-ts";
-import SlSelect from "@shoelace-style/shoelace/dist/react/select/index.js";
-import SlOption from "@shoelace-style/shoelace/dist/react/option/index.js";
-import type { SlChangeEvent } from "@shoelace-style/shoelace/dist/react/select/index.js";
-import type SlSelectElement from "@shoelace-style/shoelace/dist/components/select/select.js";
-import { StacFeatureCollection } from "../types/stac";
+  SimpleGrid
+} from '@chakra-ui/react';
+import React from 'react';
+import type { StacCollection } from 'stac-ts';
+import SlSelect from '@shoelace-style/shoelace/dist/react/select/index.js';
+import SlOption from '@shoelace-style/shoelace/dist/react/option/index.js';
+import type { SlChangeEvent } from '@shoelace-style/shoelace/dist/react/select/index.js';
+import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select.js';
+import { StacFeatureCollection } from '../types/stac';
 
 interface CollectionDropdownProps {
   collections: StacCollection[];
@@ -22,7 +22,7 @@ interface CollectionDropdownProps {
 
 function CollectionDropdown({
   collections,
-  onSelect,
+  onSelect
 }: CollectionDropdownProps) {
   const handleChange = (event: SlChangeEvent) => {
     const select = event.target as SlSelectElement;
@@ -37,9 +37,9 @@ function CollectionDropdown({
   return (
     <div>
       <SlSelect
-        placeholder="Select a collection"
-        size="medium"
-        style={{ width: "100%" }}
+        placeholder='Select a collection'
+        size='medium'
+        style={{ width: '100%' }}
         onSlChange={handleChange}
       >
         {collections.map((collection) => (
@@ -71,20 +71,20 @@ export default function Sidebar({
   isStacCollectionsError,
   isStacItemsLoading,
   isStacItemsError,
-  stacItems,
+  stacItems
 }: SidebarProps) {
   const renderThumbnail = (url: string, altText: string) => {
     if (!url) return null;
 
     return (
-      <Box height="200px" width="100%" overflow="hidden">
+      <Box height='200px' width='100%' overflow='hidden'>
         <img
           src={url}
           alt={altText}
           style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
           }}
         />
       </Box>
@@ -93,15 +93,15 @@ export default function Sidebar({
 
   return (
     <Flex
-      width="480px"
-      height="100vh"
-      direction="column"
-      padding="4"
-      overflow="auto"
-      borderRight="1px"
-      borderColor="gray.200"
+      width='480px'
+      height='100vh'
+      direction='column'
+      padding='4'
+      overflow='auto'
+      borderRight='1px'
+      borderColor='gray.200'
     >
-      <Heading size="md" marginBottom="4">
+      <Heading size='md' marginBottom='4'>
         OpenAerialMap STAC Catalog
       </Heading>
 
@@ -110,10 +110,10 @@ export default function Sidebar({
       {isStacCollectionsError && <span>Failed to load STAC catalog</span>}
 
       {availableCollections && availableCollections.length > 0 && (
-        <VStack align="stretch">
+        <VStack align='stretch'>
           <Box>
-            <Text fontWeight="bold">Collections:</Text>
-            <Box marginTop="2">
+            <Text fontWeight='bold'>Collections:</Text>
+            <Box marginTop='2'>
               <CollectionDropdown
                 collections={availableCollections}
                 onSelect={handleSelectCollection}
@@ -124,9 +124,9 @@ export default function Sidebar({
       )}
 
       {selectedCollection && (
-        <VStack align="stretch">
+        <VStack align='stretch'>
           <Box>
-            <VStack align="stretch" marginTop="2" />
+            <VStack align='stretch' marginTop='2' />
           </Box>
         </VStack>
       )}
@@ -136,8 +136,8 @@ export default function Sidebar({
       {isStacItemsError && <span>Failed to load STAC items</span>}
 
       {stacItems && stacItems.features && stacItems.features.length > 0 && (
-        <Box marginTop="6">
-          <Heading size="sm" marginBottom="3">
+        <Box marginTop='6'>
+          <Heading size='sm' marginBottom='3'>
             Latest uploads
           </Heading>
 
@@ -146,38 +146,38 @@ export default function Sidebar({
               const startDate = stacItem.properties?.start_datetime
                 ? new Date(stacItem.properties.start_datetime)
                     .toISOString()
-                    .split("T")[0]
-                : "No date";
+                    .split('T')[0]
+                : 'No date';
 
               // Format ground sampling distance (GSD) to include units
               const resolution = stacItem.properties?.gsd
                 ? `${Math.round(stacItem.properties.gsd * 100)} cm`
-                : "Unknown";
+                : 'Unknown';
 
               const producerName =
-                (stacItem.properties?.["oam:producer_name"] as string) ||
-                "Unknown producer";
+                (stacItem.properties?.['oam:producer_name'] as string) ||
+                'Unknown producer';
 
               const title = stacItem.properties?.title || `Item ${stacItem.id}`;
 
-              const thumbnailUrl = stacItem.assets?.thumbnail?.href || "";
+              const thumbnailUrl = stacItem.assets?.thumbnail?.href || '';
 
               return (
                 <Box
                   key={`STAC-item-${stacItem.id}`}
-                  borderWidth="1px"
-                  borderRadius="md"
-                  overflow="hidden"
-                  bg="gray.100"
+                  borderWidth='1px'
+                  borderRadius='md'
+                  overflow='hidden'
+                  bg='gray.100'
                 >
-                  <Box padding="3">
-                    <Text fontWeight="semibold" fontSize="sm">
+                  <Box padding='3'>
+                    <Text fontWeight='semibold' fontSize='sm'>
                       {title}
                     </Text>
-                    <Text fontSize="sm">
+                    <Text fontSize='sm'>
                       {startDate} / {resolution}
                     </Text>
-                    <Text fontSize="sm" color="blue.600">
+                    <Text fontSize='sm' color='blue.600'>
                       <span>{producerName}</span>
                     </Text>
                   </Box>

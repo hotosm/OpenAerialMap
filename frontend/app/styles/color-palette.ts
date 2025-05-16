@@ -1,4 +1,4 @@
-import { rgba, tint, shade } from "polished";
+import { rgba, tint, shade } from 'polished';
 
 /**
  * Curry the polished rgba function to allow switching the parameters.
@@ -7,65 +7,65 @@ const _rgba = (alpha: number) => (color: string) => rgba(color, alpha);
 
 const colorPaletteSettings = [
   {
-    code: "50",
-    colorFn: tint(0.96),
+    code: '50',
+    colorFn: tint(0.96)
   },
   {
-    code: "50a",
-    colorFn: _rgba(0.04),
+    code: '50a',
+    colorFn: _rgba(0.04)
   },
   {
-    code: "100",
-    colorFn: tint(0.92),
+    code: '100',
+    colorFn: tint(0.92)
   },
   {
-    code: "100a",
-    colorFn: _rgba(0.08),
+    code: '100a',
+    colorFn: _rgba(0.08)
   },
   {
-    code: "200",
-    colorFn: tint(0.84),
+    code: '200',
+    colorFn: tint(0.84)
   },
   {
-    code: "200a",
-    colorFn: _rgba(0.16),
+    code: '200a',
+    colorFn: _rgba(0.16)
   },
   {
-    code: "300",
-    colorFn: tint(0.68),
+    code: '300',
+    colorFn: tint(0.68)
   },
   {
-    code: "300a",
-    colorFn: _rgba(0.32),
+    code: '300a',
+    colorFn: _rgba(0.32)
   },
   {
-    code: "400",
-    colorFn: tint(0.36),
+    code: '400',
+    colorFn: tint(0.36)
   },
   {
-    code: "400a",
-    colorFn: _rgba(0.64),
+    code: '400a',
+    colorFn: _rgba(0.64)
   },
   {
-    code: "500",
-    colorFn: (v: string) => v,
+    code: '500',
+    colorFn: (v: string) => v
   },
   {
-    code: "600",
-    colorFn: shade(0.16),
+    code: '600',
+    colorFn: shade(0.16)
   },
   {
-    code: "700",
-    colorFn: shade(0.32),
+    code: '700',
+    colorFn: shade(0.32)
   },
   {
-    code: "800",
-    colorFn: shade(0.48),
+    code: '800',
+    colorFn: shade(0.48)
   },
   {
-    code: "900",
-    colorFn: shade(0.64),
-  },
+    code: '900',
+    colorFn: shade(0.64)
+  }
 ];
 
 /**
@@ -103,8 +103,8 @@ export function createColorPalette(baseColor: string) {
   return colorPaletteSettings.reduce(
     (acc, c) => ({
       ...acc,
-      [c.code]: { value: c.colorFn(baseColor) },
+      [c.code]: { value: c.colorFn(baseColor) }
     }),
-    {},
+    {}
   );
 }

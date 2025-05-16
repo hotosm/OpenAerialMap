@@ -1,9 +1,9 @@
-import { FeatureCollection } from "geojson";
-import { StacItem, StacLink } from "stac-ts";
+import { FeatureCollection } from 'geojson';
+import { StacItem, StacLink } from 'stac-ts';
 
 export interface StacFeatureCollection
-  extends Omit<FeatureCollection, "features"> {
-  type: "FeatureCollection";
+  extends Omit<FeatureCollection, 'features'> {
+  type: 'FeatureCollection';
   features: StacItem[];
   links: StacLink[];
   numberMatched?: number;
