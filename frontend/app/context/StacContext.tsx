@@ -20,6 +20,7 @@ interface StacContextType {
   isStacQueryablesError: Error | null;
 
   handleSelectCollection: (id: string) => void;
+  handleSelectQueryable: (id: string) => void;
 
   // additional data
   stacQueryables?: any;
@@ -33,6 +34,9 @@ interface StacProviderProps {
 
 export function StacProvider({ children }: StacProviderProps) {
   const [selectedCollection, setSelectedCollection] = useState<
+    string | undefined
+  >();
+  const [selectedQueryable, setSelectedQueryable] = useState<
     string | undefined
   >();
 
@@ -57,6 +61,9 @@ export function StacProvider({ children }: StacProviderProps) {
   const handleSelectCollection = (id: string) => {
     setSelectedCollection(id);
   };
+  const handleSelectQueryable = (id: string) => {
+    setSelectedQueryable(id);
+  };
 
   const value = {
     selectedCollection,
@@ -67,12 +74,14 @@ export function StacProvider({ children }: StacProviderProps) {
     isStacCollectionsError,
     isStacItemsLoading,
     isStacItemsError,
+
+    stacQueryables,
+    selectedQueryable,
     isStacQueryablesLoading,
     isStacQueryablesError,
 
     handleSelectCollection,
-
-    stacQueryables
+    handleSelectQueryable
   };
 
   return <StacContext.Provider value={value}>{children}</StacContext.Provider>;
