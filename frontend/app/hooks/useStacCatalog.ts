@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { type StacCatalog, type StacCollection } from 'stac-ts';
 import { StacFeatureCollection } from '../types/stac';
-import { useQuery } from '@tanstack/react-query';
-import { type StacCatalog, type StacCollection } from 'stac-ts';
-import { StacFeatureCollection } from '../types/stac';
 
 const STAC_API = import.meta.env.VITE_STAC_API_URL;
 const STAC_PATH = import.meta.env.VITE_STAC_API_PATHNAME;
@@ -17,7 +14,6 @@ const STAC_ITEMS_LIMIT = import.meta.env.VITE_STAC_ITEMS_LIMIT;
 export function useStacCatalog() {
   return useQuery<StacCatalog>({
     queryKey: ['stacCatalog'],
-    queryKey: ['stacCatalog'],
     queryFn: async () => {
       const response = await fetch(STAC_API_PATH);
       if (!response.ok) {
@@ -25,24 +21,20 @@ export function useStacCatalog() {
       }
       return response.json();
     }
-    }
   });
 }
 
 export function useStacCollections() {
   return useQuery<StacCollection & { collections: StacCollection[] }>({
     queryKey: ['stacCollections'],
-    queryKey: ['stacCollections'],
     queryFn: async () => {
       const response = await fetch(`${STAC_API_PATH}/collections`);
       if (!response.ok) {
         throw new Error(
           `Failed to fetch STAC collections: ${response.statusText}`
-          `Failed to fetch STAC collections: ${response.statusText}`
         );
       }
       return response.json();
-    }
     }
   });
 }
@@ -52,7 +44,6 @@ export function useStacCollections() {
  */
 export function useStacItems(collection: string | undefined) {
   return useQuery<StacFeatureCollection>({
-    queryKey: ['stacItems', collection],
     queryKey: ['stacItems', collection],
     queryFn: async () => {
       const response = await fetch(
@@ -64,7 +55,6 @@ export function useStacItems(collection: string | undefined) {
       return response.json();
     },
     enabled: collection !== undefined
-    enabled: collection !== undefined
   });
 }
 
@@ -74,7 +64,6 @@ export function useStacItems(collection: string | undefined) {
 export function useStacQueryables(collection: string | undefined) {
   return useQuery({
     queryKey: ['stacQueryables', collection],
-    queryKey: ['stacQueryables', collection],
     queryFn: async () => {
       const response = await fetch(
         `${STAC_API_PATH}/collections/${collection}/queryables`
@@ -82,12 +71,10 @@ export function useStacQueryables(collection: string | undefined) {
       if (!response.ok) {
         throw new Error(
           `Failed to fetch STAC queryables: ${response.statusText}`
-          `Failed to fetch STAC queryables: ${response.statusText}`
         );
       }
       return response.json();
     },
-    enabled: collection !== undefined
     enabled: collection !== undefined
   });
 }
