@@ -8,26 +8,19 @@ import {
   SimpleGrid
 } from '@chakra-ui/react';
 import React, { useState, useEffect } from 'react';
-import type { StacCollection } from 'stac-ts';
 import SlSelect from '@shoelace-style/shoelace/dist/react/select/index.js';
 import SlOption from '@shoelace-style/shoelace/dist/react/option/index.js';
 import type { SlChangeEvent } from '@shoelace-style/shoelace/dist/react/select/index.js';
 import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select.js';
 import { useStac } from '../context/StacContext';
+import { StacFeatureCollection } from '../types/stac';
 
 function CollectionDropdown() {
   const { availableCollections, handleSelectCollection } = useStac();
 
   if (!availableCollections) return null;
 
-function CollectionDropdown({
-  collections,
-  onSelect
-}: CollectionDropdownProps) {
-  const handleChange = (
-    event: SlChangeEvent,
-    onSelect: (id: string) => void
-  ) => {
+  const handleChange = (event: SlChangeEvent) => {
     const select = event.target as SlSelectElement;
     if (select && select.value) {
       const value = Array.isArray(select.value)
@@ -36,13 +29,14 @@ function CollectionDropdown({
       handleSelectCollection(value);
     }
   };
+
   return (
     <div>
       <SlSelect
         placeholder='Select a collection'
         size='medium'
         style={{ width: '100%' }}
-        onSlChange={(event) => handleChange(event, onSelect)}
+        onSlChange={handleChange}
       >
         {availableCollections.map((collection) => (
           <SlOption key={`collection-${collection.id}`} value={collection.id}>
@@ -53,7 +47,6 @@ function CollectionDropdown({
     </div>
   );
 }
-
 interface SelectableItemsProps {
   stacItems: StacFeatureCollection;
   onSelectionChange: (selectedIds: string[]) => void;
@@ -161,28 +154,19 @@ function SelectableItems({
 }
 
 interface SidebarProps {
-  selectedCollection?: string;
-  availableCollections?: StacCollection[];
-  handleSelectCollection: (id: string) => void;
-  isStacCollectionLoading: boolean;
-  isStacCollectionsError: Error | null;
-  stacItems: StacFeatureCollection | undefined;
-  isStacItemsLoading: boolean;
-  isStacItemsError: Error | null;
   onSelectionChange: (selectedIds: string[]) => void;
 }
 
-export default function Sidebar({
-  selectedCollection,
-  availableCollections,
-  handleSelectCollection,
-  isStacCollectionLoading,
-  isStacCollectionsError,
-  isStacItemsLoading,
-  isStacItemsError,
-  stacItems,
-  onSelectionChange
-}: SidebarProps) {
+export default function Sidebar({ onSelectionChange }: SidebarProps) {
+  const {
+    selectedCollection,
+    availableCollections,
+    isStacCollectionLoading,
+    isStacCollectionsError,
+    isStacItemsLoading,
+    isStacItemsError,
+    stacItems
+  } = useStac();
   return (
     <Flex
       width='480px'
@@ -233,4 +217,3 @@ export default function Sidebar({
     </Flex>
   );
 }
-})
