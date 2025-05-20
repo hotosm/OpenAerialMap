@@ -206,10 +206,6 @@ function FilterComponent() {
   );
 }
 
-// interface SidebarProps {
-//   onSelectionChange: (selectedIds: string[]) => void;
-// }
-
 export default function Sidebar() {
   const {
     selectedCollection,
