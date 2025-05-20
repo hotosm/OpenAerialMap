@@ -29,7 +29,8 @@ export default function MapComponent({
   zoom = 1,
   onSelect
 }: MapComponentProps) {
-  const { selectedItems, selectedCollection, filters } = useStac();
+  const { selectedItems, selectedCollection, filters, setSelectedItems } =
+    useStac();
   const map = useRef<Map | null>(null);
   const markersRef = useRef<Marker[]>([]);
   const { data: stacItems, isLoading } = useStacItems(
@@ -226,9 +227,14 @@ export default function MapComponent({
               essential: true
             });
 
-            // If the feature has an ID and onSelect is provided, trigger the selection
-            if (feature.id && onSelect) {
-              onSelect(feature.id.toString());
+            // Select this item in the context
+            if (feature.id) {
+              setSelectedItems([feature.id.toString()]);
+
+              // Also call the onSelect prop if provided
+              if (onSelect) {
+                onSelect(feature.id.toString());
+              }
             }
           });
 
@@ -269,9 +275,9 @@ export default function MapComponent({
               maxZoom: 16
             });
 
-            // If the feature has an ID and onSelect is provided, trigger the selection
-            if (feature.id && onSelect) {
-              onSelect(feature.id.toString());
+            // Select this item in the context
+            if (feature.id) {
+              setSelectedItems([feature.id.toString()]);
             }
           });
 
@@ -279,7 +285,7 @@ export default function MapComponent({
         }
       });
     }
-  }, [stacItems, isLoading, selectedCollection]);
+  }, [stacItems, isLoading, selectedCollection, setSelectedItems, onSelect]);
 
   // Update selected items filter and zoom to last selected
   useEffect(() => {
