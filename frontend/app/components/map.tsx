@@ -3,8 +3,11 @@ import {
   Map,
   GeoJSONSource,
   LngLatBoundsLike,
-  RasterTileSource
+  RasterTileSource,
+  Marker,
+  LngLatBounds
 } from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { RASTER_API_PATH, useStacItems } from '$hooks/useStacCatalog';
 import { Feature, FeatureCollection, Geometry } from 'geojson';
 import { StacItem } from 'stac-ts';
@@ -28,6 +31,7 @@ export default function MapComponent({
 }: MapComponentProps) {
   const { selectedItems, selectedCollection, filters } = useStac();
   const map = useRef<Map | null>(null);
+  const markersRef = useRef<Marker[]>([]);
   const { data: stacItems, isLoading } = useStacItems(
     selectedCollection,
     filters
@@ -118,6 +122,8 @@ export default function MapComponent({
             filter: ['in', ['get', 'id'], ['literal', []]]
           });
 
+          // We'll use Marker objects instead of a circle layer
+
           // Change cursor on hover
           map.current?.on('mouseenter', 'stac-items-layer', () => {
             if (map.current) {
@@ -142,7 +148,16 @@ export default function MapComponent({
     selectedCollection
   ]);
 
-  //Update the stac items data
+  // Clean up markers when component unmounts
+  useEffect(() => {
+    return () => {
+      // Remove all markers from the map
+      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current = [];
+    };
+  }, []);
+
+  // Update the stac items data and add markers
   useEffect(() => {
     if (
       map.current &&
@@ -175,10 +190,58 @@ export default function MapComponent({
             }))
         };
       }
+
+      // Update the GeoJSON source for the fill layers
+      const preparedData = prepareStacItemsForMapLibre(
+        stacItems
+      ) as FeatureCollection;
       (map.current.getSource('stac-items-data') as GeoJSONSource).setData(
-        prepareStacItemsForMapLibre(stacItems) as FeatureCollection
+        preparedData
       );
       map.current.triggerRepaint();
+
+      // First, clear any existing markers
+      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current = [];
+
+      // Add new markers for each feature
+      preparedData.features.forEach((feature) => {
+        if (feature.geometry.type === 'Point') {
+          // For Point geometries, use the coordinates directly
+          const [lng, lat] = feature.geometry.coordinates;
+          const marker = new Marker({ color: '#3388ff' })
+            .setLngLat([lng, lat])
+            .addTo(map.current!);
+
+          markersRef.current.push(marker);
+        } else if (
+          feature.geometry.type === 'Polygon' ||
+          feature.geometry.type === 'MultiPolygon'
+        ) {
+          // For polygons, calculate the centroid
+          const bounds = new LngLatBounds();
+
+          if (feature.geometry.type === 'Polygon') {
+            feature.geometry.coordinates[0].forEach((coord) => {
+              bounds.extend([coord[0], coord[1]]);
+            });
+          } else {
+            // Handle MultiPolygon
+            feature.geometry.coordinates.forEach((polygon) => {
+              polygon[0].forEach((coord) => {
+                bounds.extend([coord[0], coord[1]]);
+              });
+            });
+          }
+
+          const center = bounds.getCenter();
+          const marker = new Marker({ color: '#3388ff' })
+            .setLngLat(center)
+            .addTo(map.current!);
+
+          markersRef.current.push(marker);
+        }
+      });
     }
   }, [stacItems, isLoading, selectedCollection]);
 
@@ -219,6 +282,10 @@ export default function MapComponent({
       selectedCollection &&
       map.current.getSource('stac-collection-data')
     ) {
+      // Clear any existing markers
+      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current = [];
+
       const params = new URLSearchParams();
       params.append('assets', 'visual');
       const queryParams = params.toString() ? `?${params.toString()}` : '';
