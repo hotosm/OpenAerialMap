@@ -212,6 +212,25 @@ export default function MapComponent({
           const marker = new Marker({ color: '#3388ff' })
             .setLngLat([lng, lat])
             .addTo(map.current!);
+          
+          // Add click handler to zoom to this point
+          const markerElement = marker.getElement();
+          markerElement.style.cursor = 'pointer';
+          
+          markerElement.addEventListener('click', () => {
+            // For point geometries, fly to the point location with zoom
+            map.current?.flyTo({
+              center: [lng, lat],
+              zoom: 14,
+              speed: 0.8,
+              essential: true
+            });
+            
+            // If the feature has an ID and onSelect is provided, trigger the selection
+            if (feature.id && onSelect) {
+              onSelect(feature.id.toString());
+            }
+          });
 
           markersRef.current.push(marker);
         } else if (
@@ -238,6 +257,23 @@ export default function MapComponent({
           const marker = new Marker({ color: '#3388ff' })
             .setLngLat(center)
             .addTo(map.current!);
+          
+          // Add click handler to zoom to this polygon's bounds
+          const markerElement = marker.getElement();
+          markerElement.style.cursor = 'pointer';
+          
+          markerElement.addEventListener('click', () => {
+            // For polygon geometries, fit to the bounds
+            map.current?.fitBounds(bounds, {
+              padding: 100,
+              maxZoom: 16
+            });
+            
+            // If the feature has an ID and onSelect is provided, trigger the selection
+            if (feature.id && onSelect) {
+              onSelect(feature.id.toString());
+            }
+          });
 
           markersRef.current.push(marker);
         }
