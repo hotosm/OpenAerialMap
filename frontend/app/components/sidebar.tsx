@@ -127,7 +127,7 @@ function SelectableItems({
               overflow='hidden'
               bg='gray.100'
               borderColor={
-                selectedItems.includes(stacItem.id) ? 'blue.500' : 'gray.200'
+                selectedItems.includes(stacItem.id) ? 'red.500' : 'gray.200'
               }
             >
               <Box
