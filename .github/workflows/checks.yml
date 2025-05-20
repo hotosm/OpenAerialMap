@@ -32,22 +32,25 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.4
 
       - name: Use Node.js ${{ env.NODE }}
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
+          node-version-file: "./frontend/.nvmrc"
+          cache: "pnpm"
+          cache-dependency-path: "frontend/pnpm-lock.yaml"
 
       - name: Cache node_modules
         uses: actions/cache@v4
         id: cache-node-modules
         with:
-          path: node_modules
-          key: ${{ runner.os }}-build-${{ hashFiles('**/package.json') }}
+          path: frontend/node_modules
+          key: ${{ runner.os }}-build-${{ hashFiles('frontend/package.json') }}
 
       - name: Install
-        run: pnpm install
+        run: cd frontend && pnpm install
 
   lint:
     needs: prep
@@ -59,25 +62,28 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.4
 
       - name: Use Node.js ${{ env.NODE }}
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
+          node-version-file: "./frontend/.nvmrc"
+          cache: "pnpm"
+          cache-dependency-path: "frontend/pnpm-lock.yaml"
 
       - name: Cache node_modules
         uses: actions/cache@v4
         id: cache-node-modules
         with:
-          path: node_modules
-          key: ${{ runner.os }}-build-${{ hashFiles('**/package.json') }}
+          path: frontend/node_modules
+          key: ${{ runner.os }}-build-${{ hashFiles('frontend/package.json') }}
 
       - name: Install
-        run: pnpm install
+        run: cd frontend && pnpm install
 
       - name: Lint
-        run: pnpm lint
+        run: cd frontend && pnpm lint
 
   test:
     needs: prep
@@ -89,22 +95,25 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.4
 
       - name: Use Node.js ${{ env.NODE }}
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
+          node-version-file: "./frontend/.nvmrc"
+          cache: "pnpm"
+          cache-dependency-path: "frontend/pnpm-lock.yaml"
 
       - name: Cache node_modules
         uses: actions/cache@v4
         id: cache-node-modules
         with:
-          path: node_modules
-          key: ${{ runner.os }}-build-${{ hashFiles('**/package.json') }}
+          path: frontend/node_modules
+          key: ${{ runner.os }}-build-${{ hashFiles('frontend/package.json') }}
 
       - name: Install
-        run: pnpm install
+        run: cd frontend && pnpm install
 
       - name: Test
-        run: pnpm test
+        run: cd frontend && pnpm test

@@ -14,6 +14,7 @@ import {
   QueryClient,
   QueryClientProvider
 } from '@tanstack/react-query';
+
 import system from './styles/theme';
 import MapComponent from './components/map';
 import Sidebar from './components/sidebar';

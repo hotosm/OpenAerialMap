@@ -10,6 +10,9 @@ export interface StacFeatureCollection
   numberReturned?: number;
 }
 
+export interface StacFeature extends Feature {
+  properties: StacItem;
+}
 export interface StacQueryable {
   title: string;
   $ref: string;

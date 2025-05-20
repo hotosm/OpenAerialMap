@@ -7,14 +7,15 @@ import {
   Spinner,
   SimpleGrid
 } from '@chakra-ui/react';
-import React from 'react';
-import SlButton from '@shoelace-style/shoelace/dist/react/button/index.js';
+import React, { useState, useEffect } from 'react';
 import SlSelect from '@shoelace-style/shoelace/dist/react/select/index.js';
 import SlOption from '@shoelace-style/shoelace/dist/react/option/index.js';
-import SlInput from '@shoelace-style/shoelace/dist/react/input/index.js';
 import type { SlChangeEvent } from '@shoelace-style/shoelace/dist/react/select/index.js';
 import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select.js';
 import { useStac } from '../context/StacContext';
+import { StacFeatureCollection } from '../types/stac';
+import SlButton from '@shoelace-style/shoelace/dist/react/button/index.js';
+import SlInput from '@shoelace-style/shoelace/dist/react/input/index.js';
 
 function CollectionDropdown() {
   const { availableCollections, handleSelectCollection } = useStac();
@@ -46,6 +47,111 @@ function CollectionDropdown() {
         ))}
       </SlSelect>
     </div>
+  );
+}
+interface SelectableItemsProps {
+  stacItems: StacFeatureCollection;
+  onSelectionChange: (selectedIds: string[]) => void;
+}
+
+function SelectableItems({
+  stacItems,
+  onSelectionChange
+}: SelectableItemsProps) {
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+  // Update parent when local selection changes
+  useEffect(() => {
+    onSelectionChange(selectedItems);
+  }, [selectedItems, onSelectionChange]);
+
+  const handleItemClick = (itemId: string) => {
+    setSelectedItems((prev) => {
+      if (prev.includes(itemId)) {
+        return prev.filter((id) => id !== itemId);
+      } else {
+        return [...prev, itemId];
+      }
+    });
+  };
+
+  const renderThumbnail = (url: string, altText: string) => {
+    if (!url) return null;
+
+    return (
+      <Box height='200px' width='100%' overflow='hidden'>
+        <img
+          src={url}
+          alt={altText}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
+        />
+      </Box>
+    );
+  };
+  return (
+    <Box marginTop='6'>
+      <Heading size='sm' marginBottom='3'>
+        Latest uploads
+      </Heading>
+
+      <SimpleGrid columns={2} gap={4}>
+        {stacItems.features.map((stacItem) => {
+          const startDate = stacItem.properties?.start_datetime
+            ? new Date(stacItem.properties.start_datetime)
+                .toISOString()
+                .split('T')[0]
+            : 'No date';
+
+          // Format ground sampling distance (GSD) to include units
+          const resolution = stacItem.properties?.gsd
+            ? `${Math.round(stacItem.properties.gsd * 100)} cm`
+            : 'Unknown';
+
+          const producerName =
+            (stacItem.properties?.['oam:producer_name'] as string) ||
+            'Unknown producer';
+
+          const title = stacItem.properties?.title || `Item ${stacItem.id}`;
+
+          const thumbnailUrl = stacItem.assets?.thumbnail?.href || '';
+
+          return (
+            <Box
+              key={`STAC-item-${stacItem.id}`}
+              borderWidth='1px'
+              borderRadius='md'
+              overflow='hidden'
+              bg='gray.100'
+              borderColor={
+                selectedItems.includes(stacItem.id) ? 'blue.500' : 'gray.200'
+              }
+            >
+              <Box
+                padding='3'
+                onClick={() => handleItemClick(stacItem.id)}
+                cursor='pointer'
+              >
+                <Text fontWeight='semibold' fontSize='sm'>
+                  {title}
+                </Text>
+                <Text fontSize='sm'>
+                  {startDate} / {resolution}
+                </Text>
+                <Text fontSize='sm' color='blue.600'>
+                  <span>{producerName}</span>
+                </Text>
+              </Box>
+
+              {renderThumbnail(thumbnailUrl, title)}
+            </Box>
+          );
+        })}
+      </SimpleGrid>
+    </Box>
   );
 }
 
@@ -108,25 +214,9 @@ export default function Sidebar() {
     isStacCollectionsError,
     isStacItemsLoading,
     isStacItemsError,
-    stacItems
+    stacItems,
+    setSelectedItems
   } = useStac();
-  const renderThumbnail = (url: string, altText: string) => {
-    if (!url) return null;
-
-    return (
-      <Box height='200px' width='100%' overflow='hidden'>
-        <img
-          src={url}
-          alt={altText}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover'
-          }}
-        />
-      </Box>
-    );
-  };
 
   return (
     <Flex
@@ -173,58 +263,10 @@ export default function Sidebar() {
       {isStacItemsError && <span>Failed to load STAC items</span>}
 
       {stacItems && stacItems.features && stacItems.features.length > 0 && (
-        <Box marginTop='6'>
-          <Heading size='sm' marginBottom='3'>
-            Items
-          </Heading>
-
-          <SimpleGrid columns={2} gap={4}>
-            {stacItems.features.map((stacItem) => {
-              const startDate = stacItem.properties?.start_datetime
-                ? new Date(stacItem.properties.start_datetime)
-                    .toISOString()
-                    .split('T')[0]
-                : 'No date';
-
-              // Format ground sampling distance (GSD) to include units
-              const resolution = stacItem.properties?.gsd
-                ? `${Math.round(stacItem.properties.gsd * 100)} cm`
-                : 'Unknown';
-
-              const producerName =
-                (stacItem.properties?.['oam:producer_name'] as string) ||
-                'Unknown producer';
-
-              const title = stacItem.properties?.title || `Item ${stacItem.id}`;
-
-              const thumbnailUrl = stacItem.assets?.thumbnail?.href || '';
-
-              return (
-                <Box
-                  key={`STAC-item-${stacItem.id}`}
-                  borderWidth='1px'
-                  borderRadius='md'
-                  overflow='hidden'
-                  bg='gray.100'
-                >
-                  <Box padding='3'>
-                    <Text fontWeight='semibold' fontSize='sm'>
-                      {title}
-                    </Text>
-                    <Text fontSize='sm'>
-                      {startDate} / {resolution}
-                    </Text>
-                    <Text fontSize='sm' color='blue.600'>
-                      <span>{producerName}</span>
-                    </Text>
-                  </Box>
-
-                  {renderThumbnail(thumbnailUrl, title)}
-                </Box>
-              );
-            })}
-          </SimpleGrid>
-        </Box>
+        <SelectableItems
+          stacItems={stacItems}
+          onSelectionChange={setSelectedItems}
+        />
       )}
     </Flex>
   );
