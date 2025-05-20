@@ -38,8 +38,8 @@ jobs:
       - name: Use Node.js ${{ env.NODE }}
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
+          node-version-file: "./frontend/.nvmrc"
+          cache: "pnpm"
 
       - name: Cache node_modules
         uses: actions/cache@v4
@@ -65,8 +65,8 @@ jobs:
       - name: Use Node.js ${{ env.NODE }}
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
+          node-version-file: "./frontend/.nvmrc"
+          cache: "pnpm"
 
       - name: Cache node_modules
         uses: actions/cache@v4
@@ -95,8 +95,8 @@ jobs:
       - name: Use Node.js ${{ env.NODE }}
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
+          node-version-file: "./frontend/.nvmrc"
+          cache: "pnpm"
 
       - name: Cache node_modules
         uses: actions/cache@v4
