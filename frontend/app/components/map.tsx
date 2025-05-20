@@ -1,5 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import maplibregl, { LngLatBoundsLike, RasterTileSource } from 'maplibre-gl';
+import {
+  Map,
+  GeoJSONSource,
+  LngLatBoundsLike,
+  RasterTileSource
+} from 'maplibre-gl';
 import { RASTER_API_PATH, useStacItems } from '$hooks/useStacCatalog';
 import { Feature, FeatureCollection, Geometry } from 'geojson';
 import { StacItem } from 'stac-ts';
@@ -22,7 +27,7 @@ export default function MapComponent({
   onSelect
 }: MapComponentProps) {
   const { selectedItems, selectedCollection, filters } = useStac();
-  const map = useRef<maplibregl.Map | null>(null);
+  const map = useRef<Map | null>(null);
   const { data: stacItems, isLoading } = useStacItems(
     selectedCollection,
     filters
@@ -30,7 +35,7 @@ export default function MapComponent({
 
   useEffect(() => {
     if (!map.current) {
-      map.current = new maplibregl.Map({
+      map.current = new Map({
         container: containerId,
         style: {
           version: 8,
@@ -73,7 +78,7 @@ export default function MapComponent({
             type: 'raster',
             source: 'stac-collection-data',
             paint: {
-              'raster-opacity': 0.9
+              'raster-opacity': 1
             }
           });
 
@@ -92,8 +97,8 @@ export default function MapComponent({
             type: 'fill',
             source: 'stac-items-data',
             paint: {
-              'fill-color': '#fff',
-              'fill-opacity': 0.4,
+              'fill-color': '#000',
+              'fill-opacity': 0.25,
               'fill-outline-color': '#fff',
               'fill-antialias': true
             }
@@ -106,7 +111,7 @@ export default function MapComponent({
             source: 'stac-items-data',
             paint: {
               'fill-color': '#b30000',
-              'fill-opacity': 0.25,
+              'fill-opacity': 0.4,
               'fill-outline-color': '#b30000',
               'fill-antialias': true
             },
@@ -137,6 +142,7 @@ export default function MapComponent({
     selectedCollection
   ]);
 
+  //Update the stac items data
   useEffect(() => {
     if (
       map.current &&
@@ -169,9 +175,9 @@ export default function MapComponent({
             }))
         };
       }
-      (
-        map.current.getSource('stac-items-data') as maplibregl.GeoJSONSource
-      ).setData(prepareStacItemsForMapLibre(stacItems) as FeatureCollection);
+      (map.current.getSource('stac-items-data') as GeoJSONSource).setData(
+        prepareStacItemsForMapLibre(stacItems) as FeatureCollection
+      );
       map.current.triggerRepaint();
     }
   }, [stacItems, isLoading, selectedCollection]);
@@ -216,11 +222,19 @@ export default function MapComponent({
       const params = new URLSearchParams();
       params.append('assets', 'visual');
       const queryParams = params.toString() ? `?${params.toString()}` : '';
+      const itemsSource = map.current.getSource(
+        'stac-items-data'
+      ) as GeoJSONSource;
+      itemsSource.setData({
+        type: 'FeatureCollection',
+        features: []
+      } as FeatureCollection);
 
-      const source = map.current.getSource(
+      const collectionSource = map.current.getSource(
         'stac-collection-data'
       ) as RasterTileSource;
-      source.setTiles([
+
+      collectionSource.setTiles([
         `${RASTER_API_PATH}/collections/${selectedCollection}/tiles/WebMercatorQuad/{z}/{x}/{y}.png${queryParams}`
       ]);
     }
