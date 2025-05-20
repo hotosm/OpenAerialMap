@@ -3,8 +3,6 @@ import { type StacCatalog, type StacCollection } from 'stac-ts';
 import { StacFeatureCollection, StacQueryables } from '../types/stac';
 import { StacItemFilter } from '../context/StacContext';
 
-// const STAC_CATALOG_API_URL = import.meta.env.VITE_STAC_CATALOG_API_URL;
-
 const STAC_API = import.meta.env.VITE_STAC_API_URL;
 const STAC_PATH = import.meta.env.VITE_STAC_API_PATHNAME;
 const RASTER_PATH = import.meta.env.VITE_STAC_TILER_PATHNAME;
