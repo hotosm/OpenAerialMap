@@ -9,5 +9,6 @@ interface ImportMetaEnv {
   readonly VITE_STAC_API_PATHNAME: string;
   readonly VITE_STAC_TILER_PATHNAME: string;
   readonly VITE_STAC_ITEMS_LIMIT: string;
+  // readonly VITE_STAC_CATALOG_API_URL: string;
   // more env vars...
 }

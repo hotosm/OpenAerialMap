@@ -1,16 +1,31 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { StacCollection } from 'stac-ts';
-import { StacFeatureCollection } from '../types/stac';
+import { StacFeatureCollection, StacQueryables } from '../types/stac';
 import {
   useStacCollections,
   useStacItems,
   useStacQueryables
 } from '../hooks/useStacCatalog';
 
+export interface DateFilter {
+  startDate: string | undefined;
+  endDate: string | undefined;
+}
+
+export interface ItemIdFilter {
+  itemId: string | undefined;
+}
+
+export type StacItemFilter = {
+  itemIdFilter: ItemIdFilter;
+  dateFilter: DateFilter;
+};
+
 interface StacContextType {
   selectedCollection?: string;
   availableCollections?: StacCollection[];
   stacItems?: StacFeatureCollection;
+  selectedItems: string[];
 
   isStacCollectionLoading: boolean;
   isStacCollectionsError: Error | null;
@@ -21,9 +36,11 @@ interface StacContextType {
 
   handleSelectCollection: (id: string) => void;
   handleSelectQueryable: (id: string) => void;
+  handleSetFilter: (filters: StacItemFilter) => void;
+  setSelectedItems: (items: string[]) => void;
 
-  // additional data
-  stacQueryables?: any;
+  stacQueryables?: StacQueryables;
+  filters: StacItemFilter;
 }
 
 const StacContext = createContext<StacContextType | undefined>(undefined);
@@ -39,6 +56,14 @@ export function StacProvider({ children }: StacProviderProps) {
   const [selectedQueryable, setSelectedQueryable] = useState<
     string | undefined
   >();
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [filters, setFilters] = useState<{
+    itemIdFilter: ItemIdFilter;
+    dateFilter: DateFilter;
+  }>({
+    itemIdFilter: { itemId: undefined },
+    dateFilter: { startDate: undefined, endDate: undefined }
+  });
 
   const {
     data: stacCollections,
@@ -50,7 +75,7 @@ export function StacProvider({ children }: StacProviderProps) {
     data: stacItems,
     isLoading: isStacItemsLoading,
     error: isStacItemsError
-  } = useStacItems(selectedCollection);
+  } = useStacItems(selectedCollection, filters);
 
   const {
     data: stacQueryables,
@@ -64,6 +89,8 @@ export function StacProvider({ children }: StacProviderProps) {
   const handleSelectQueryable = (id: string) => {
     setSelectedQueryable(id);
   };
+
+  const handleSetFilter = (filters: StacItemFilter) => setFilters(filters);
 
   const value = {
     selectedCollection,
@@ -80,8 +107,13 @@ export function StacProvider({ children }: StacProviderProps) {
     isStacQueryablesLoading,
     isStacQueryablesError,
 
+    filters,
+    selectedItems,
+
     handleSelectCollection,
-    handleSelectQueryable
+    handleSelectQueryable,
+    handleSetFilter,
+    setSelectedItems
   };
 
   return <StacContext.Provider value={value}>{children}</StacContext.Provider>;

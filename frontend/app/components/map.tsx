@@ -4,15 +4,14 @@ import { RASTER_API_PATH, useStacItems } from '$hooks/useStacCatalog';
 import { Feature, FeatureCollection, Geometry } from 'geojson';
 import { StacItem } from 'stac-ts';
 import { StacFeatureCollection } from '../types/stac';
+import { useStac } from '../context/StacContext';
 
 interface MapComponentProps {
   centerCoordinates?: [number, number];
   containerId?: string;
   features?: Feature[];
   zoom?: number;
-  selectedCollection?: string;
   onSelect?: (itemId: string) => void;
-  selectedItems?: string[];
 }
 
 export default function MapComponent({
@@ -20,12 +19,14 @@ export default function MapComponent({
   containerId = 'map',
   features,
   zoom = 1,
-  selectedCollection,
-  onSelect,
-  selectedItems = []
+  onSelect
 }: MapComponentProps) {
+  const { selectedItems, selectedCollection, filters } = useStac();
   const map = useRef<maplibregl.Map | null>(null);
-  const { data: stacItems, isLoading } = useStacItems(selectedCollection);
+  const { data: stacItems, isLoading } = useStacItems(
+    selectedCollection,
+    filters
+  );
 
   useEffect(() => {
     if (!map.current) {

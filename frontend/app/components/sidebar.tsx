@@ -14,6 +14,8 @@ import type { SlChangeEvent } from '@shoelace-style/shoelace/dist/react/select/i
 import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select.js';
 import { useStac } from '../context/StacContext';
 import { StacFeatureCollection } from '../types/stac';
+import SlButton from '@shoelace-style/shoelace/dist/react/button/index.js';
+import SlInput from '@shoelace-style/shoelace/dist/react/input/index.js';
 
 function CollectionDropdown() {
   const { availableCollections, handleSelectCollection } = useStac();
@@ -153,11 +155,62 @@ function SelectableItems({
   );
 }
 
-interface SidebarProps {
-  onSelectionChange: (selectedIds: string[]) => void;
+function FilterComponent() {
+  const { filters, handleSetFilter } = useStac();
+
+  return (
+    <div>
+      <SlInput
+        label='Item ID'
+        value={filters['itemIdFilter'].itemId || ''}
+        placeholder='Item ID...'
+        onSlChange={(e) => {
+          handleSetFilter({
+            ...filters,
+            itemIdFilter: { itemId: (e.target as HTMLInputElement).value }
+          });
+        }}
+      />
+      <SlInput
+        label='Start'
+        type='date'
+        value={filters['dateFilter'].startDate || undefined}
+        placeholder='Start...'
+        onSlChange={(e) => {
+          handleSetFilter({
+            ...filters,
+            dateFilter: {
+              ...filters['dateFilter'],
+              startDate: (e.target as HTMLInputElement).value
+            }
+          });
+        }}
+      />
+      <SlInput
+        label='End'
+        type='date'
+        value={filters['dateFilter'].endDate || undefined}
+        placeholder='End...'
+        onSlChange={(e) => {
+          handleSetFilter({
+            ...filters,
+            dateFilter: {
+              ...filters['dateFilter'],
+              endDate: (e.target as HTMLInputElement).value
+            }
+          });
+        }}
+      />
+      <SlButton variant='primary'>Filter</SlButton>
+    </div>
+  );
 }
 
-export default function Sidebar({ onSelectionChange }: SidebarProps) {
+// interface SidebarProps {
+//   onSelectionChange: (selectedIds: string[]) => void;
+// }
+
+export default function Sidebar() {
   const {
     selectedCollection,
     availableCollections,
@@ -165,8 +218,10 @@ export default function Sidebar({ onSelectionChange }: SidebarProps) {
     isStacCollectionsError,
     isStacItemsLoading,
     isStacItemsError,
-    stacItems
+    stacItems,
+    setSelectedItems
   } = useStac();
+
   return (
     <Flex
       width='480px'
@@ -199,7 +254,10 @@ export default function Sidebar({ onSelectionChange }: SidebarProps) {
       {selectedCollection && (
         <VStack align='stretch'>
           <Box>
-            <VStack align='stretch' marginTop='2' />
+            <Text fontWeight='bold'>Filter:</Text>
+            <Box marginTop='2'>
+              <FilterComponent />
+            </Box>
           </Box>
         </VStack>
       )}
@@ -211,7 +269,7 @@ export default function Sidebar({ onSelectionChange }: SidebarProps) {
       {stacItems && stacItems.features && stacItems.features.length > 0 && (
         <SelectableItems
           stacItems={stacItems}
-          onSelectionChange={onSelectionChange}
+          onSelectionChange={setSelectedItems}
         />
       )}
     </Flex>

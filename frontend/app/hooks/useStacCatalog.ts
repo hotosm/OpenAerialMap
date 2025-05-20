@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { type StacCatalog, type StacCollection } from 'stac-ts';
-import { StacFeatureCollection } from '../types/stac';
+import { StacFeatureCollection, StacQueryables } from '../types/stac';
+import { StacItemFilter } from '../context/StacContext';
+
+// const STAC_CATALOG_API_URL = import.meta.env.VITE_STAC_CATALOG_API_URL;
 
 const STAC_API = import.meta.env.VITE_STAC_API_URL;
 const STAC_PATH = import.meta.env.VITE_STAC_API_PATHNAME;
@@ -42,13 +45,30 @@ export function useStacCollections() {
 /**
  * @param collection The STAC collection ID
  */
-export function useStacItems(collection: string | undefined) {
+export function useStacItems(
+  collection: string | undefined,
+  filters: StacItemFilter
+) {
   return useQuery<StacFeatureCollection>({
-    queryKey: ['stacItems', collection],
+    queryKey: ['stacItems', collection, filters],
     queryFn: async () => {
-      const response = await fetch(
-        `${STAC_API_PATH}/collections/${collection}/items?limit=${STAC_ITEMS_LIMIT}`
-      );
+      let stacItemsFetchURL = `${STAC_API_PATH}/collections/${collection}/items?limit=${STAC_ITEMS_LIMIT}`;
+      let hasQueryParams = false;
+      if (
+        filters.dateFilter &&
+        filters.dateFilter.startDate &&
+        filters.dateFilter.endDate
+      ) {
+        const datetimeValue = `${new Date(filters.dateFilter.startDate).toISOString()}/${new Date(filters.dateFilter.endDate).toISOString()}`;
+        stacItemsFetchURL += `?datetime=${encodeURIComponent(datetimeValue)}`;
+        hasQueryParams = true;
+      }
+      if (filters.itemIdFilter && filters.itemIdFilter.itemId) {
+        // Add CQL2 text filter for item ID
+        const connector = hasQueryParams ? '&' : '?';
+        stacItemsFetchURL += `${connector}filter-lang=cql2-text&filter=${encodeURIComponent(`id = '${filters.itemIdFilter.itemId}'`)}`;
+      }
+      const response = await fetch(stacItemsFetchURL);
       if (!response.ok) {
         throw new Error(`Failed to fetch STAC items: ${response.statusText}`);
       }
@@ -62,7 +82,7 @@ export function useStacItems(collection: string | undefined) {
  * @param collection The STAC collection ID
  */
 export function useStacQueryables(collection: string | undefined) {
-  return useQuery({
+  return useQuery<StacQueryables>({
     queryKey: ['stacQueryables', collection],
     queryFn: async () => {
       const response = await fetch(
