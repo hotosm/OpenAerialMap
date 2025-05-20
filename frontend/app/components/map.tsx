@@ -93,7 +93,7 @@ export default function MapComponent({
             source: 'stac-items-data',
             paint: {
               'fill-color': '#fff',
-              'fill-opacity': 0.25,
+              'fill-opacity': 0.4,
               'fill-outline-color': '#fff',
               'fill-antialias': true
             }
