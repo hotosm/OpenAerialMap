@@ -8,8 +8,10 @@ import {
   SimpleGrid
 } from '@chakra-ui/react';
 import React from 'react';
+import SlButton from '@shoelace-style/shoelace/dist/react/button/index.js';
 import SlSelect from '@shoelace-style/shoelace/dist/react/select/index.js';
 import SlOption from '@shoelace-style/shoelace/dist/react/option/index.js';
+import SlInput from '@shoelace-style/shoelace/dist/react/input/index.js';
 import type { SlChangeEvent } from '@shoelace-style/shoelace/dist/react/select/index.js';
 import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select.js';
 import { useStac } from '../context/StacContext';
@@ -43,6 +45,57 @@ function CollectionDropdown() {
           </SlOption>
         ))}
       </SlSelect>
+    </div>
+  );
+}
+
+function FilterComponent() {
+  const { filters, handleSetFilter } = useStac();
+
+  return (
+    <div>
+      <SlInput
+        label='Item ID'
+        value={filters['itemIdFilter'].itemId || ''}
+        placeholder='Item ID...'
+        onSlChange={(e) => {
+          handleSetFilter({
+            ...filters,
+            itemIdFilter: { itemId: (e.target as HTMLInputElement).value }
+          });
+        }}
+      />
+      <SlInput
+        label='Start'
+        type='date'
+        value={filters['dateFilter'].startDate || undefined}
+        placeholder='Start...'
+        onSlChange={(e) => {
+          handleSetFilter({
+            ...filters,
+            dateFilter: {
+              ...filters['dateFilter'],
+              startDate: (e.target as HTMLInputElement).value
+            }
+          });
+        }}
+      />
+      <SlInput
+        label='End'
+        type='date'
+        value={filters['dateFilter'].endDate || undefined}
+        placeholder='End...'
+        onSlChange={(e) => {
+          handleSetFilter({
+            ...filters,
+            dateFilter: {
+              ...filters['dateFilter'],
+              endDate: (e.target as HTMLInputElement).value
+            }
+          });
+        }}
+      />
+      <SlButton variant='primary'>Filter</SlButton>
     </div>
   );
 }
@@ -107,7 +160,10 @@ export default function Sidebar() {
       {selectedCollection && (
         <VStack align='stretch'>
           <Box>
-            <VStack align='stretch' marginTop='2' />
+            <Text fontWeight='bold'>Filter:</Text>
+            <Box marginTop='2'>
+              <FilterComponent />
+            </Box>
           </Box>
         </VStack>
       )}

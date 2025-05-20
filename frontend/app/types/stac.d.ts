@@ -9,3 +9,18 @@ export interface StacFeatureCollection
   numberMatched?: number;
   numberReturned?: number;
 }
+
+export interface StacQueryable {
+  title: string;
+  $ref: string;
+  description: string;
+}
+
+export interface StacQueryables {
+  $id: string;
+  $schema: string;
+  additionalProperties: boolean;
+  properties: Record<string, StacQueryable>;
+  title: string;
+  type: string;
+}
