@@ -5,7 +5,7 @@ setBasePath(
 );
 
 import { ChakraProvider } from '@chakra-ui/react';
-import React from 'react';
+import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   // useQuery,
@@ -19,6 +19,7 @@ import system from './styles/theme';
 import MapComponent from './components/map';
 import Sidebar from './components/sidebar';
 import { StacProvider } from './context/StacContext';
+import Detail from '$components/detail';
 
 // If using a router add the public url to the base path.
 // const publicUrl = process.env.BASE_URL || '';
@@ -36,9 +37,17 @@ function Root() {
 }
 
 function AppContent() {
+  const [showDetailPane, setShowDetailPane] = useState(false);
   return (
     <StacProvider>
-      <Sidebar />
+      <Sidebar
+        isDetailPaneShown={showDetailPane}
+        setShowDetailPane={setShowDetailPane}
+      />
+      <Detail
+        isDetailPaneShown={showDetailPane}
+        setShowDetailPane={setShowDetailPane}
+      />
       <MapComponent />
     </StacProvider>
   );
