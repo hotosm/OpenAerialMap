@@ -51,28 +51,28 @@ function CollectionDropdown() {
 }
 interface SelectableItemsProps {
   stacItems: StacFeatureCollection;
-  onSelectionChange: (selectedIds: string[]) => void;
+  onSelectionChange: (selectedId: string) => void;
+  isDetailPaneShown: boolean;
+  setShowDetailPane: (isShown: boolean) => void;
 }
 
 function SelectableItems({
   stacItems,
-  onSelectionChange
+  onSelectionChange,
+  isDetailPaneShown,
+  setShowDetailPane
 }: SelectableItemsProps) {
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedItem, setSelectedItem] = useState<string>();
 
   // Update parent when local selection changes
   useEffect(() => {
-    onSelectionChange(selectedItems);
-  }, [selectedItems, onSelectionChange]);
+    if (selectedItem) {
+      onSelectionChange(selectedItem);
+    }
+  }, [selectedItem, onSelectionChange]);
 
   const handleItemClick = (itemId: string) => {
-    setSelectedItems((prev) => {
-      if (prev.includes(itemId)) {
-        return prev.filter((id) => id !== itemId);
-      } else {
-        return [...prev, itemId];
-      }
-    });
+    setSelectedItem(itemId);
   };
 
   const renderThumbnail = (url: string, altText: string) => {
@@ -97,6 +97,13 @@ function SelectableItems({
       <Heading size='sm' marginBottom='3'>
         Latest uploads
       </Heading>
+
+      <SlButton
+        variant='primary'
+        onClick={() => setShowDetailPane(isDetailPaneShown ? false : true)}
+      >
+        {isDetailPaneShown ? 'Hide' : 'Show'} selected item details
+      </SlButton>
 
       <SimpleGrid columns={2} gap={4}>
         {stacItems.features.map((stacItem) => {
@@ -127,7 +134,7 @@ function SelectableItems({
               overflow='hidden'
               bg='gray.100'
               borderColor={
-                selectedItems.includes(stacItem.id) ? 'red.500' : 'gray.200'
+                selectedItem === stacItem.id ? 'red.500' : 'gray.200'
               }
             >
               <Box
@@ -201,12 +208,20 @@ function FilterComponent() {
           });
         }}
       />
-      <SlButton variant='primary'>Filter</SlButton>
+      {/* <SlButton variant='primary'>Filter</SlButton> */}
     </div>
   );
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  isDetailPaneShown: boolean;
+  setShowDetailPane: (isShown: boolean) => void;
+}
+
+export default function Sidebar({
+  isDetailPaneShown,
+  setShowDetailPane
+}: SidebarProps) {
   const {
     selectedCollection,
     availableCollections,
@@ -215,7 +230,7 @@ export default function Sidebar() {
     isStacItemsLoading,
     isStacItemsError,
     stacItems,
-    setSelectedItems
+    setSelectedItem
   } = useStac();
 
   return (
@@ -265,7 +280,9 @@ export default function Sidebar() {
       {stacItems && stacItems.features && stacItems.features.length > 0 && (
         <SelectableItems
           stacItems={stacItems}
-          onSelectionChange={setSelectedItems}
+          onSelectionChange={setSelectedItem}
+          isDetailPaneShown={isDetailPaneShown}
+          setShowDetailPane={setShowDetailPane}
         />
       )}
     </Flex>

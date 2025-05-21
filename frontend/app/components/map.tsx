@@ -29,7 +29,7 @@ export default function MapComponent({
   zoom = 1,
   onSelect
 }: MapComponentProps) {
-  const { selectedItems, selectedCollection, filters, setSelectedItems } =
+  const { selectedItem, selectedCollection, filters, setSelectedItem } =
     useStac();
   const map = useRef<Map | null>(null);
   const markersRef = useRef<Marker[]>([]);
@@ -123,9 +123,6 @@ export default function MapComponent({
             filter: ['in', ['get', 'id'], ['literal', []]]
           });
 
-          // We'll use Marker objects instead of a circle layer
-
-          // Change cursor on hover
           map.current?.on('mouseenter', 'stac-items-layer', () => {
             if (map.current) {
               map.current.getCanvas().style.cursor = 'pointer';
@@ -149,10 +146,9 @@ export default function MapComponent({
     selectedCollection
   ]);
 
-  // Clean up markers when component unmounts
   useEffect(() => {
+    // Clean up markers when component unmounts
     return () => {
-      // Remove all markers from the map
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
     };
@@ -229,7 +225,7 @@ export default function MapComponent({
 
             // Select this item in the context
             if (feature.id) {
-              setSelectedItems([feature.id.toString()]);
+              setSelectedItem(feature.id.toString());
 
               // Also call the onSelect prop if provided
               if (onSelect) {
@@ -277,7 +273,7 @@ export default function MapComponent({
 
             // Select this item in the context
             if (feature.id) {
-              setSelectedItems([feature.id.toString()]);
+              setSelectedItem(feature.id.toString());
             }
           });
 
@@ -285,7 +281,7 @@ export default function MapComponent({
         }
       });
     }
-  }, [stacItems, isLoading, selectedCollection, setSelectedItems, onSelect]);
+  }, [stacItems, isLoading, selectedCollection, setSelectedItem, onSelect]);
 
   // Update selected items filter and zoom to last selected
   useEffect(() => {
@@ -294,16 +290,16 @@ export default function MapComponent({
       map.current.setFilter('selected-items-layer', [
         'in',
         ['get', 'id'],
-        ['literal', selectedItems]
+        ['literal', selectedItem]
       ]);
 
       // Zoom to the last selected feature
       if (
         stacItems &&
         stacItems?.features.length > 0 &&
-        selectedItems?.length > 0
+        selectedItem !== undefined
       ) {
-        const lastSelectedId = selectedItems[selectedItems.length - 1];
+        const lastSelectedId = selectedItem;
         const lastFeature = stacItems.features.find(
           (f) => f.id === lastSelectedId
         );
@@ -315,7 +311,7 @@ export default function MapComponent({
         }
       }
     }
-  }, [selectedItems, stacItems]);
+  }, [selectedItem, stacItems]);
 
   // Update mosaic raster data when collection changes
   useEffect(() => {
