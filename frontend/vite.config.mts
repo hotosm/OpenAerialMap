@@ -6,6 +6,7 @@ import vitePortScanner from './vite-plugin-port-scanner';
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/OpenAerialMap/',
   server: {
     port: 9000
   },
