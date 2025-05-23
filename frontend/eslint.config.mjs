@@ -44,6 +44,7 @@ export default [
       'react/no-typos': 2,
       'react/no-unused-prop-types': 2,
       'react/no-unused-state': 2,
+      'react/react-in-jsx-scope': 'off',
       'react/self-closing-comp': 2,
       'react/style-prop-object': 2,
       'react/void-dom-elements-no-children': 2,

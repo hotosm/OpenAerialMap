@@ -7,7 +7,7 @@ import {
   Spinner,
   SimpleGrid
 } from '@chakra-ui/react';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import SlSelect from '@shoelace-style/shoelace/dist/react/select/index.js';
 import SlOption from '@shoelace-style/shoelace/dist/react/option/index.js';
 import type { SlChangeEvent } from '@shoelace-style/shoelace/dist/react/select/index.js';

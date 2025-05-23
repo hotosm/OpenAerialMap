@@ -5,7 +5,7 @@ setBasePath(
 );
 
 import { ChakraProvider } from '@chakra-ui/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   // useQuery,

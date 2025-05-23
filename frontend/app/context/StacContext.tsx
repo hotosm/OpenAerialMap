@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import { StacCollection } from 'stac-ts';
 import { StacFeatureCollection, StacQueryables } from '../types/stac';
 import {
