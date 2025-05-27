@@ -14,14 +14,12 @@ At times, it may be necessary to include options/variables specific to `producti
 See Vite's documentation on [env variables](https://vite.dev/guide/env-and-mode.html#env-variables-and-modes).
 
 ## Github Actions for CI
+
 Testing and deployment is taken care of by Github Actions. It is set up to:
 
-1. run checks (test & lint) on every non-draft Pull Request
-2. build and deploy the application on pushes to the `main` branch
+1. build and deploy the application to Github Pages on pushes to the `frontend-prototype` branch
 
-To make sure that the site deploys with passing checks, branch protection should be set up for the `main` branch (`Require status checks to pass before merging`).
-
-Deploy is not set up by default, but the project contains [sample workflows](.github/_workflow-samples/README.md) that can be used to set it up.
+To make sure that the site deploys, make sure that the `pnpm-lock.yaml` file is up to date with `package.json`.
 
 ## Linting
 
@@ -39,13 +37,13 @@ npm run test
 
 ## Coding style
 
-File [.editorconfig](.editorconfig) defines basic code styling rules, like indent sizes. 
+File [.editorconfig](.editorconfig) defines basic code styling rules, like indent sizes.
 
 [Prettier](https://prettier.io) is the recommended code formatter. Atom and VSCode have extensions supporting Prettier-ESLint integration, which will help maintain style consistency while following linting rules.
 
 ## Path alias
 
-Path alias allow you to define aliases for commonly used folders and avoid having very long file paths like `../../../component`. This also allows you to more easily move files around without worrying the imports will break.  
+Path alias allow you to define aliases for commonly used folders and avoid having very long file paths like `../../../component`. This also allows you to more easily move files around without worrying the imports will break.
 
 Paths are defined in the [package.json](./package.json) under `alias`. They start with a `$` and point to a folder.
 
