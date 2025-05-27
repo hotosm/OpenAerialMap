@@ -8,6 +8,7 @@ import { StacFeatureCollection } from '../types/stac';
 import SlButton from '@shoelace-style/shoelace/dist/react/button/index.js';
 import SlInput from '@shoelace-style/shoelace/dist/react/input/index.js';
 import SlSpinner from '@shoelace-style/shoelace/dist/react/spinner/index.js';
+import { SlIcon } from '@shoelace-style/shoelace/dist/react';
 
 function CollectionDropdown() {
   const { availableCollections, handleSelectCollection } = useStac();
@@ -148,19 +149,31 @@ function SelectableItems({
               <div
                 style={{
                   padding: '0.75rem',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
                 }}
                 onClick={() => handleItemClick(stacItem.id)}
               >
-                <span style={{ fontWeight: '600', fontSize: '0.875rem' }}>
-                  {title}
-                </span>
-                <div style={{ fontSize: '0.875rem' }}>
-                  {startDate} / {resolution}
+                <div>
+                  <span style={{ fontWeight: '600', fontSize: '0.875rem' }}>
+                    {title}
+                  </span>
+                  <div style={{ fontSize: '0.875rem' }}>
+                    {startDate} / {resolution}
+                  </div>
+                  <span style={{ fontSize: '0.875rem', color: '#3182ce' }}>
+                    {producerName}
+                  </span>
                 </div>
-                <span style={{ fontSize: '0.875rem', color: '#3182ce' }}>
-                  {producerName}
-                </span>
+                <SlIcon
+                  name='info-square'
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setShowDetailPane(isDetailPaneShown ? false : true);
+                  }}
+                />
               </div>
 
               {renderThumbnail(thumbnailUrl, title)}
