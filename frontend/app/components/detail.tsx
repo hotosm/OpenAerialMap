@@ -16,7 +16,7 @@ export default function Detail({
   isDetailPaneShown,
   setShowDetailPane
 }: DetailProps) {
-  const { selectedItem, stacItems } = useStac();
+  const { selectedItem, stacItems, setSelectedItem } = useStac();
 
   const itemData = stacItems?.features.find(
     (item) => item.id === selectedItem
@@ -300,7 +300,17 @@ export default function Detail({
           width: '100%'
         }}
       >
-        <SlButton size='small' variant='text' disabled={currentIndex <= 0}>
+        <SlButton 
+          size='small' 
+          variant='text' 
+          disabled={currentIndex <= 0}
+          onClick={() => {
+            if (currentIndex > 0 && stacItems?.features) {
+              const prevItem = stacItems.features[currentIndex - 1];
+              setSelectedItem(prevItem.id);
+            }
+          }}
+        >
           <SlIcon slot='prefix' name='chevron-left' />
           Previous
         </SlButton>
@@ -313,6 +323,12 @@ export default function Detail({
           size='small'
           variant='text'
           disabled={currentIndex >= totalResults - 1}
+          onClick={() => {
+            if (currentIndex < totalResults - 1 && stacItems?.features) {
+              const nextItem = stacItems.features[currentIndex + 1];
+              setSelectedItem(nextItem.id);
+            }
+          }}
         >
           Next
           <SlIcon slot='suffix' name='chevron-right' />
