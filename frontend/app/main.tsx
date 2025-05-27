@@ -4,7 +4,6 @@ setBasePath(
   'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/'
 );
 
-import { ChakraProvider } from '@chakra-ui/react';
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
@@ -14,8 +13,6 @@ import {
   QueryClient,
   QueryClientProvider
 } from '@tanstack/react-query';
-
-import system from './styles/theme';
 import MapComponent from './components/map';
 import Sidebar from './components/sidebar';
 import { StacProvider } from './context/StacContext';
@@ -29,9 +26,7 @@ const queryClient = new QueryClient();
 function Root() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ChakraProvider value={system}>
-        <AppContent />
-      </ChakraProvider>
+      <AppContent />
     </QueryClientProvider>
   );
 }

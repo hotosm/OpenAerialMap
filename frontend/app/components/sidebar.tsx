@@ -1,12 +1,3 @@
-import {
-  Box,
-  Flex,
-  Heading,
-  Text,
-  VStack,
-  Spinner,
-  SimpleGrid
-} from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
 import SlSelect from '@shoelace-style/shoelace/dist/react/select/index.js';
 import SlOption from '@shoelace-style/shoelace/dist/react/option/index.js';
@@ -16,6 +7,7 @@ import { useStac } from '../context/StacContext';
 import { StacFeatureCollection } from '../types/stac';
 import SlButton from '@shoelace-style/shoelace/dist/react/button/index.js';
 import SlInput from '@shoelace-style/shoelace/dist/react/input/index.js';
+import SlSpinner from '@shoelace-style/shoelace/dist/react/spinner/index.js';
 
 function CollectionDropdown() {
   const { availableCollections, handleSelectCollection } = useStac();
@@ -49,6 +41,7 @@ function CollectionDropdown() {
     </div>
   );
 }
+
 interface SelectableItemsProps {
   stacItems: StacFeatureCollection;
   onSelectionChange: (selectedId: string) => void;
@@ -79,7 +72,7 @@ function SelectableItems({
     if (!url) return null;
 
     return (
-      <Box height='200px' width='100%' overflow='hidden'>
+      <div style={{ height: '200px', width: '100%', overflow: 'hidden' }}>
         <img
           src={url}
           alt={altText}
@@ -89,14 +82,21 @@ function SelectableItems({
             objectFit: 'cover'
           }}
         />
-      </Box>
+      </div>
     );
   };
+
   return (
-    <Box marginTop='6'>
-      <Heading size='sm' marginBottom='3'>
+    <div style={{ marginTop: '1.5rem' }}>
+      <h3
+        style={{
+          fontSize: '0.875rem',
+          fontWeight: '600',
+          marginBottom: '0.75rem'
+        }}
+      >
         Latest uploads
-      </Heading>
+      </h3>
 
       <SlButton
         variant='primary'
@@ -105,7 +105,14 @@ function SelectableItems({
         {isDetailPaneShown ? 'Hide' : 'Show'} selected item details
       </SlButton>
 
-      <SimpleGrid columns={2} gap={4}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '1rem',
+          marginTop: '1rem'
+        }}
+      >
         {stacItems.features.map((stacItem) => {
           const startDate = stacItem.properties?.start_datetime
             ? new Date(stacItem.properties.start_datetime)
@@ -127,38 +134,41 @@ function SelectableItems({
           const thumbnailUrl = stacItem.assets?.thumbnail?.href || '';
 
           return (
-            <Box
+            <div
               key={`STAC-item-${stacItem.id}`}
-              borderWidth='1px'
-              borderRadius='md'
-              overflow='hidden'
-              bg='gray.100'
-              borderColor={
-                selectedItem === stacItem.id ? 'red.500' : 'gray.200'
-              }
+              style={{
+                border: '1px solid',
+                borderRadius: '0.375rem',
+                overflow: 'hidden',
+                backgroundColor: '#f7fafc',
+                borderColor:
+                  selectedItem === stacItem.id ? '#e53e3e' : '#e2e8f0'
+              }}
             >
-              <Box
-                padding='3'
+              <div
+                style={{
+                  padding: '0.75rem',
+                  cursor: 'pointer'
+                }}
                 onClick={() => handleItemClick(stacItem.id)}
-                cursor='pointer'
               >
-                <Text fontWeight='semibold' fontSize='sm'>
+                <span style={{ fontWeight: '600', fontSize: '0.875rem' }}>
                   {title}
-                </Text>
-                <Text fontSize='sm'>
+                </span>
+                <div style={{ fontSize: '0.875rem' }}>
                   {startDate} / {resolution}
-                </Text>
-                <Text fontSize='sm' color='blue.600'>
-                  <span>{producerName}</span>
-                </Text>
-              </Box>
+                </div>
+                <span style={{ fontSize: '0.875rem', color: '#3182ce' }}>
+                  {producerName}
+                </span>
+              </div>
 
               {renderThumbnail(thumbnailUrl, title)}
-            </Box>
+            </div>
           );
         })}
-      </SimpleGrid>
-    </Box>
+      </div>
+    </div>
   );
 }
 
@@ -234,46 +244,66 @@ export default function Sidebar({
   } = useStac();
 
   return (
-    <Flex
-      width='480px'
-      height='100vh'
-      direction='column'
-      padding='4'
-      overflow='auto'
-      borderRight='1px'
-      borderColor='gray.200'
+    <div
+      style={{
+        width: '450px',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '1rem',
+        overflow: 'auto',
+        borderRight: '1px solid #e2e8f0'
+      }}
     >
-      <Heading size='md' marginBottom='4'>
+      <h2
+        style={{
+          fontSize: '1.25rem',
+          fontWeight: 'bold',
+          marginBottom: '1rem'
+        }}
+      >
         OpenAerialMap STAC Catalog
-      </Heading>
+      </h2>
 
-      {isStacCollectionLoading && <Spinner />}
+      {isStacCollectionLoading && <SlSpinner />}
 
       {isStacCollectionsError && <span>Failed to load STAC catalog</span>}
 
       {availableCollections && availableCollections.length > 0 && (
-        <VStack align='stretch'>
-          <Box>
-            <Text fontWeight='bold'>Collections:</Text>
-            <Box marginTop='2'>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch'
+          }}
+        >
+          <div>
+            <span style={{ fontWeight: 'bold' }}>Collections:</span>
+            <div style={{ marginTop: '0.5rem' }}>
               <CollectionDropdown />
-            </Box>
-          </Box>
-        </VStack>
+            </div>
+          </div>
+        </div>
       )}
 
       {selectedCollection && (
-        <VStack align='stretch'>
-          <Box>
-            <Text fontWeight='bold'>Filter:</Text>
-            <Box marginTop='2'>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch'
+          }}
+        >
+          <div>
+            <span style={{ fontWeight: 'bold' }}>Filter:</span>
+            <div style={{ marginTop: '0.5rem' }}>
               <FilterComponent />
-            </Box>
-          </Box>
-        </VStack>
+            </div>
+          </div>
+        </div>
       )}
 
-      {isStacItemsLoading && <Spinner />}
+      {isStacItemsLoading && <SlSpinner />}
 
       {isStacItemsError && <span>Failed to load STAC items</span>}
 
@@ -285,6 +315,6 @@ export default function Sidebar({
           setShowDetailPane={setShowDetailPane}
         />
       )}
-    </Flex>
+    </div>
   );
 }
