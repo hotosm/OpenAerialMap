@@ -10,7 +10,8 @@ There are two commands, both run via `pnpm`
 
 ### Configurations and environment variables
 
-At times, it may be necessary to include options/variables specific to `production`, `staging` or `local` in the code. To handle this, there you can use `.env` files.
+This app makes use of the environment variables found in `.env.template`. Copy and paste that file to a new file called `.env` and populate the values.
+
 See Vite's documentation on [env variables](https://vite.dev/guide/env-and-mode.html#env-variables-and-modes).
 
 ## Github Actions for CI
