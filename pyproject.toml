@@ -1,0 +1,18 @@
+[project]
+name = "openaerialmap"
+version = "0.0.0"
+description = "Demonstration notebooks for using openaerialmap programmatically"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "contextily>=1.6.2",
+    "cql2>=0.3.7",
+    "geopandas>=1.0.1",
+    "httpx>=0.28.1",
+    "ipykernel>=6.29.5",
+    "jinja2>=3.1.6",
+    "pystac-client>=0.8.6",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.11.11"]
