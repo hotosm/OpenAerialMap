@@ -10,7 +10,7 @@ At a high level:
 ## Creating STAC items
 
 The code to create STAC items for the OpenAerialMap STAC Catalog lives in [stactools-hotosm](https://github.com/hotosm/stactools-hotosm/).
-For an example of creating HOT OAM STAC item from existing Maxar items, see [this script](https://github.com/hotosm/stactools-hotosm/blob/main/src/stactools/hotosm/maxar/stac.py).
+For an example of creating HOT OAM STAC item from existing Maxar items, see [this file](https://github.com/hotosm/stactools-hotosm/blob/main/src/stactools/hotosm/maxar/stac.py).
 Create a new branch, create a new directory for your provider, and write the code.
 Be sure to include tests.
 When it's ready, open a pull request (PR) with your changes.
