@@ -70,6 +70,7 @@ jobs:
         with:
           # Upload dist folder from frontend directory
           path: "./frontend/dist"
+          retention-days: 90
 
       - name: Deploy to GitHub Pages
         id: deployment
