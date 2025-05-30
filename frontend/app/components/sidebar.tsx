@@ -188,6 +188,54 @@ function SelectableItems({
 function FilterComponent() {
   const { filters, handleSetFilter } = useStac();
 
+  const handleDatePresetChange = (event: SlChangeEvent) => {
+    const select = event.target as SlSelectElement;
+    const preset = select.value as string;
+
+    let startDate = '';
+    let endDate = '';
+
+    const today = new Date();
+    const formatDate = (date: Date) => date.toISOString().split('T')[0];
+
+    switch (preset) {
+      case 'last-week': {
+        const lastWeek = new Date(today);
+        lastWeek.setDate(today.getDate() - 7);
+        startDate = formatDate(lastWeek);
+        endDate = formatDate(today);
+        break;
+      }
+      case 'last-month': {
+        const lastMonth = new Date(today);
+        lastMonth.setMonth(today.getMonth() - 1);
+        startDate = formatDate(lastMonth);
+        endDate = formatDate(today);
+        break;
+      }
+      case 'last-year': {
+        const lastYear = new Date(today);
+        lastYear.setFullYear(today.getFullYear() - 1);
+        startDate = formatDate(lastYear);
+        endDate = formatDate(today);
+        break;
+      }
+      case 'all':
+      default:
+        startDate = '';
+        endDate = '';
+        break;
+    }
+
+    handleSetFilter({
+      ...filters,
+      dateFilter: {
+        startDate,
+        endDate
+      }
+    });
+  };
+
   return (
     <div>
       <SlInput
@@ -201,6 +249,18 @@ function FilterComponent() {
           });
         }}
       />
+      <SlSelect
+        label='Date Presets'
+        placeholder='Select date range...'
+        size='medium'
+        style={{ width: '100%', marginBottom: '0.5rem' }}
+        onSlChange={handleDatePresetChange}
+      >
+        <SlOption value='all'>All</SlOption>
+        <SlOption value='last-week'>Last Week</SlOption>
+        <SlOption value='last-month'>Last Month</SlOption>
+        <SlOption value='last-year'>Last Year</SlOption>
+      </SlSelect>
       <SlInput
         label='Start'
         type='date'
