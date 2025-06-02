@@ -300,9 +300,9 @@ export default function Detail({
           width: '100%'
         }}
       >
-        <SlButton 
-          size='small' 
-          variant='text' 
+        <SlButton
+          size='small'
+          variant='text'
           disabled={currentIndex <= 0}
           onClick={() => {
             if (currentIndex > 0 && stacItems?.features) {
