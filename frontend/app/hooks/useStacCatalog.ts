@@ -51,7 +51,7 @@ export function useStacItems(
   return useQuery<StacFeatureCollection>({
     queryKey: ['stacItems', collection, filters, bbox],
     queryFn: async () => {
-      let stacItemsFetchURL = `${STAC_API_PATH}/collections/${collection}/items?limit=${STAC_ITEMS_LIMIT}&bbox=${bbox.join(',')}`;
+      let stacItemsFetchURL = `${STAC_API_PATH}/collections/${collection}/items?limit=${STAC_ITEMS_LIMIT}&bbox=${bbox.join(',')}&sortby=-datetime`;
       if (
         filters.dateFilter &&
         filters.dateFilter.startDate &&
