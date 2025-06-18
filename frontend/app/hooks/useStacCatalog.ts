@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { type StacCatalog, type StacCollection } from 'stac-ts';
-import { StacFeatureCollection, StacQueryables } from '../types/stac';
 import { StacItemFilter } from '../context/StacContext';
+import { StacFeatureCollection, StacQueryables } from '../types/stac';
 
 const STAC_API = import.meta.env.VITE_STAC_API_URL;
 const STAC_PATH = import.meta.env.VITE_STAC_API_PATHNAME;
@@ -45,12 +45,13 @@ export function useStacCollections() {
  */
 export function useStacItems(
   collection: string | undefined,
-  filters: StacItemFilter
+  filters: StacItemFilter,
+  bbox: number[]
 ) {
   return useQuery<StacFeatureCollection>({
-    queryKey: ['stacItems', collection, filters],
+    queryKey: ['stacItems', collection, filters, bbox],
     queryFn: async () => {
-      let stacItemsFetchURL = `${STAC_API_PATH}/collections/${collection}/items?limit=${STAC_ITEMS_LIMIT}`;
+      let stacItemsFetchURL = `${STAC_API_PATH}/collections/${collection}/items?limit=${STAC_ITEMS_LIMIT}&bbox=${bbox.join(',')}`;
       if (
         filters.dateFilter &&
         filters.dateFilter.startDate &&
