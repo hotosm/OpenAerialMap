@@ -297,35 +297,6 @@ export default function MapComponent({
     }
   }, [stacItems, isLoading, selectedCollection, setSelectedItem, onSelect]);
 
-  // Update selected items filter and zoom to last selected
-  useEffect(() => {
-    if (map.current && map.current.getLayer('selected-items-layer')) {
-      // Update the filter to show only selected items
-      map.current.setFilter('selected-items-layer', [
-        'in',
-        ['get', 'id'],
-        ['literal', selectedItem]
-      ]);
-
-      // Zoom to the last selected feature
-      if (
-        stacItems &&
-        stacItems?.features.length > 0 &&
-        selectedItem !== undefined
-      ) {
-        const lastSelectedId = selectedItem;
-        const lastFeature = stacItems.features.find(
-          (f) => f.id === lastSelectedId
-        );
-
-        if (lastFeature?.bbox) {
-          map.current.fitBounds(lastFeature.bbox as LngLatBoundsLike, {
-            padding: 100
-          });
-        }
-      }
-    }
-  }, [selectedItem, stacItems]);
 
   // Update mosaic raster data when collection changes
   useEffect(() => {
