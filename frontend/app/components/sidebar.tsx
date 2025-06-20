@@ -1,17 +1,23 @@
-import { useState, useEffect } from 'react';
-import SlSelect from '@shoelace-style/shoelace/dist/react/select/index.js';
-import SlOption from '@shoelace-style/shoelace/dist/react/option/index.js';
-import type { SlChangeEvent } from '@shoelace-style/shoelace/dist/react/select/index.js';
 import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select.js';
-import { useStac } from '../context/StacContext';
-import { StacFeatureCollection } from '../types/stac';
+import {
+  SlCopyButton,
+  SlDialog,
+  SlIcon
+} from '@shoelace-style/shoelace/dist/react';
 import SlButton from '@shoelace-style/shoelace/dist/react/button/index.js';
 import SlInput from '@shoelace-style/shoelace/dist/react/input/index.js';
+import SlOption from '@shoelace-style/shoelace/dist/react/option/index.js';
+import type { SlChangeEvent } from '@shoelace-style/shoelace/dist/react/select/index.js';
+import SlSelect from '@shoelace-style/shoelace/dist/react/select/index.js';
 import SlSpinner from '@shoelace-style/shoelace/dist/react/spinner/index.js';
-import { SlIcon } from '@shoelace-style/shoelace/dist/react';
+import { useEffect, useState } from 'react';
+import { useStac } from '../context/StacContext';
+import { StacFeatureCollection } from '../types/stac';
 
 function CollectionDropdown() {
   const { availableCollections, handleSelectCollection } = useStac();
+  const [collection, setCollection] = useState<string>();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   if (!availableCollections) return null;
 
@@ -22,8 +28,14 @@ function CollectionDropdown() {
         ? select.value[0]
         : select.value;
       handleSelectCollection(value);
+      setCollection(value);
     }
   };
+
+  const collectionWmtsEndpoint =
+    (collection &&
+      `${import.meta.env.VITE_STAC_API_URL}/raster/collections/${collection}/WebMercatorQuad/WMTSCapabilities.xml?minzoom=12&maxzoom=22&assets=visual`) ||
+    undefined;
 
   return (
     <div>
@@ -39,6 +51,31 @@ function CollectionDropdown() {
           </SlOption>
         ))}
       </SlSelect>
+      {collectionWmtsEndpoint && (
+        <SlButton
+          style={{ marginTop: '1em', marginBottom: '1em' }}
+          onClick={() => setDialogOpen(true)}
+        >
+          Get WMTS endpoint
+        </SlButton>
+      )}
+      <SlDialog
+        label='WMTS endpoint'
+        open={dialogOpen}
+        onSlAfterHide={() => setDialogOpen(false)}
+        // @ts-expect-error: 2353
+        style={{ '--width': '50vw' }} // typescript yells about this but it's what the docs say to do: https://shoelace.style/components/dialog
+      >
+        {collectionWmtsEndpoint}
+        <SlCopyButton value={collectionWmtsEndpoint} />
+        <SlButton
+          slot='footer'
+          variant='primary'
+          onClick={() => setDialogOpen(false)}
+        >
+          Close
+        </SlButton>
+      </SlDialog>
     </div>
   );
 }
