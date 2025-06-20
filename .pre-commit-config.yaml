@@ -13,19 +13,19 @@ repos:
     hooks:
       # Run the linter
       - id: ruff
-        files: ^src/backend/(?:.*/)*.*$
+        files: ^uploader-api/(?:.*/)*.*$
         args: [--fix, --exit-non-zero-on-fix]
       # Run the formatter
       - id: ruff-format
-        files: ^src/backend/(?:.*/)*.*$
+        files: ^uploader-api/(?:.*/)*.*$
 
   # Deps: ensure Python uv lockfile is up to date
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.7.13
     hooks:
       - id: uv-lock
-        files: src/backend/pyproject.toml
-        args: [--project, src/backend]
+        files: notebooks/pyproject.toml
+        args: [--project, notebooks]
 
   # Upgrade: upgrade Python syntax
   - repo: https://github.com/asottile/pyupgrade
@@ -46,7 +46,7 @@ repos:
     hooks:
       - id: codespell
         types: [text]
-        args: [--toml, src/backend/pyproject.toml]
+        # args: [--toml, pyproject.toml]
 
   # Autoformat: YAML, JSON, Markdown, etc.
   - repo: https://github.com/pycontribs/mirrors-prettier
