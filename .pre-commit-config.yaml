@@ -33,13 +33,6 @@ repos:
     hooks:
       - id: pyupgrade
 
-  # # Dead code: Python usused code detection
-  # - repo: https://github.com/asottile/dead
-  #   rev: v1.5.2
-  #   hooks:
-  #     - id: dead
-  #       args: ["--exclude", "contrib"]
-
   # Spelling: Checks for common misspellings in text files.
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
@@ -79,15 +72,13 @@ repos:
     rev: 2.1.1
     hooks:
       - id: bashate
-        files: ^(?!.*(?:^|/)contrib(?:/|$)).*$
 
   # Lint: Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.10.0.1
     hooks:
       - id: shellcheck
-        files: ^(?!.*(?:^|/)contrib(?:/|$)).*$
-        args: ["-x", "--exclude=SC2317,SC2188,SC2143,SC2086,SC1091"]
+        args: ["-x"]
 
   # Lint: Markdown
   - repo: https://github.com/igorshubovych/markdownlint-cli
