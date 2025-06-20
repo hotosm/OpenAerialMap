@@ -1,0 +1,83 @@
+name: Deploy OAM UI to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches:
+      - "frontend-prototype"
+      - master
+
+  # Run every 2 months (approximately 60 days) at midnight UTC on the 1st
+  schedule:
+    - cron: "0 0 1 */2 *"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets the GITHUB_TOKEN permissions to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: "./frontend/.nvmrc"
+          cache: "pnpm"
+          cache-dependency-path: "frontend/pnpm-lock.yaml"
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: cache-node-modules
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-build-${{ hashFiles('frontend/package.json') }}
+
+      - name: Install dependencies
+        run: cd frontend && pnpm install
+
+      - name: Build
+        run: cd frontend && pnpm build
+        env:
+          VITE_APP_TITLE: OpenAerialMap
+          VITE_APP_DESCRIPTION: set of tools for searching, sharing, and using openly licensed satellite and unmanned aerial vehicle (UAV) imagery
+          VITE_STAC_API_URL: https://hot-oam.ds.io/
+          VITE_STAC_API_PATHNAME: stac
+          VITE_STAC_TILER_PATHNAME: raster
+          VITE_STAC_ITEMS_LIMIT: "40"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload dist folder from frontend directory
+          path: "./frontend/dist"
+          retention-days: 90
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
