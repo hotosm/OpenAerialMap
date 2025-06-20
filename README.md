@@ -37,11 +37,11 @@ A revamp of OpenAerialMap, originally developed back in the 2010's.
 ## Components
 
 - Backend
-    - [STAC API][4] deployment of eoAPI.
-    - [STAC Extension][3] for OAM metadata requirements, data ingestion.
+  - [STAC API][4] deployment of eoAPI.
+  - [STAC Extension][3] for OAM metadata requirements, data ingestion.
 - New Frontend: Hosted in this repo.
-- Old Frontend: https://github.com/hotosm/oam-browser (currently used as frontend)
-- Old API: https://github.com/hotosm/oam-api (currently used for login / upload)
+- Old Frontend: <https://github.com/hotosm/oam-browser> (currently used as frontend)
+- Old API: <https://github.com/hotosm/oam-api> (currently used for login / upload)
 
 ## Contributing 👍🎉
 

@@ -46,7 +46,7 @@ repos:
     hooks:
       - id: codespell
         types: [text]
-        # args: [--toml, pyproject.toml]
+        args: [--toml, notebooks/pyproject.toml]
 
   # Autoformat: YAML, JSON, Markdown, etc.
   - repo: https://github.com/pycontribs/mirrors-prettier
@@ -97,12 +97,14 @@ repos:
         args:
           [
             --fix,
-            --disable,
-            MD033,
-            --disable,
-            MD059,
             --ignore,
             CHANGELOG.md,
             --ignore,
             .github,
+            --ignore,
+            metadata/README.md,
+            --ignore,
+            frontend/README.md,
+            --ignore,
+            frontend/_README.md,
           ]

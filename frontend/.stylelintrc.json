@@ -13,7 +13,5 @@
       }
     ]
   },
-  "ignoreFiles": [
-    "**/*.d.ts"
-  ]
+  "ignoreFiles": ["**/*.d.ts"]
 }

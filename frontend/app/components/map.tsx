@@ -297,7 +297,6 @@ export default function MapComponent({
     }
   }, [stacItems, isLoading, selectedCollection, setSelectedItem, onSelect]);
 
-
   // Update mosaic raster data when collection changes
   useEffect(() => {
     if (

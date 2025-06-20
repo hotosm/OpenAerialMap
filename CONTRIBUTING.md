@@ -61,7 +61,7 @@ Github, please reach out to us via our Slack **#geospatial-tech-and-innovation**
 
 We operate the "Fork & Pull" model explained at [About Pull Requests][5]
 
-Further details of our development workflow can be found [here][8]
+Further details of our development workflow can be found [on this page][8]
 
 ### If you are reporting a problem
 
@@ -83,7 +83,7 @@ for tables and images, it is preferred to use the Markdown style as
 it's much easier to read.
 
 See a detailed guide on documentation contributions
-[here](https://docs.hotosm.org/techdoc).
+[on this page](https://docs.hotosm.org/techdoc).
 
 ### Pre-Commit Hooks
 
@@ -115,8 +115,6 @@ pre-commit install
 To see more detail on the development practices used at HOT,
 please visit [this page](https://docs.hotosm.org/dev-practices)
 
-[1]: https://docs.google.com/presentation/d/1UrBG1X4MXwVd8Ps498FDlAYvesIailjjPPJfR_B4SUs/edit#slide=id.g15c1f409958_0_0 "slides"
-[2]: https://github.com/orgs/hotosm/projects/22 "Our latest task board"
 [3]: https://github.com/hotosm/openaerialmap/issues "issue queue"
 [4]: https://github.com/hotosm/openaerialmap/labels "label categories"
 [5]: https://help.github.com/articles/about-pull-requests/ "About Pull Requests"
