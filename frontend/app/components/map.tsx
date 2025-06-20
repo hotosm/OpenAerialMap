@@ -1,18 +1,18 @@
-import { useEffect, useRef } from 'react';
-import {
-  Map,
-  GeoJSONSource,
-  LngLatBoundsLike,
-  RasterTileSource,
-  Marker,
-  LngLatBounds
-} from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { RASTER_API_PATH, useStacItems } from '$hooks/useStacCatalog';
 import { Feature, FeatureCollection, Geometry } from 'geojson';
+import {
+  GeoJSONSource,
+  LngLatBounds,
+  LngLatBoundsLike,
+  Map,
+  Marker,
+  RasterTileSource
+} from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { useEffect, useRef } from 'react';
 import { StacItem } from 'stac-ts';
-import { StacFeatureCollection } from '../types/stac';
 import { useStac } from '../context/StacContext';
+import { StacFeatureCollection } from '../types/stac';
 
 interface MapComponentProps {
   centerCoordinates?: [number, number];
@@ -29,13 +29,20 @@ export default function MapComponent({
   zoom = 1,
   onSelect
 }: MapComponentProps) {
-  const { selectedItem, selectedCollection, filters, setSelectedItem } =
-    useStac();
+  const {
+    selectedItem,
+    selectedCollection,
+    filters,
+    setSelectedItem,
+    setBbox,
+    bbox
+  } = useStac();
   const map = useRef<Map | null>(null);
   const markersRef = useRef<Marker[]>([]);
   const { data: stacItems, isLoading } = useStacItems(
     selectedCollection,
-    filters
+    filters,
+    bbox
   );
 
   useEffect(() => {
@@ -132,6 +139,13 @@ export default function MapComponent({
           map.current?.on('mouseleave', 'stac-items-layer', () => {
             if (map.current) {
               map.current.getCanvas().style.cursor = '';
+            }
+          });
+
+          map.current?.on('moveend', () => {
+            if (map.current) {
+              const bounds = map.current.getBounds();
+              setBbox(bounds.toArray().flat());
             }
           });
         }
@@ -283,35 +297,6 @@ export default function MapComponent({
     }
   }, [stacItems, isLoading, selectedCollection, setSelectedItem, onSelect]);
 
-  // Update selected items filter and zoom to last selected
-  useEffect(() => {
-    if (map.current && map.current.getLayer('selected-items-layer')) {
-      // Update the filter to show only selected items
-      map.current.setFilter('selected-items-layer', [
-        'in',
-        ['get', 'id'],
-        ['literal', selectedItem]
-      ]);
-
-      // Zoom to the last selected feature
-      if (
-        stacItems &&
-        stacItems?.features.length > 0 &&
-        selectedItem !== undefined
-      ) {
-        const lastSelectedId = selectedItem;
-        const lastFeature = stacItems.features.find(
-          (f) => f.id === lastSelectedId
-        );
-
-        if (lastFeature?.bbox) {
-          map.current.fitBounds(lastFeature.bbox as LngLatBoundsLike, {
-            padding: 100
-          });
-        }
-      }
-    }
-  }, [selectedItem, stacItems]);
 
   // Update mosaic raster data when collection changes
   useEffect(() => {

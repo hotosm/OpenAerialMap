@@ -1,11 +1,11 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, ReactNode, useContext, useState } from 'react';
 import { StacCollection } from 'stac-ts';
-import { StacFeatureCollection, StacQueryables } from '../types/stac';
 import {
   useStacCollections,
   useStacItems,
   useStacQueryables
 } from '../hooks/useStacCatalog';
+import { StacFeatureCollection, StacQueryables } from '../types/stac';
 
 export interface DateFilter {
   startDate: string | undefined;
@@ -41,6 +41,9 @@ interface StacContextType {
 
   stacQueryables?: StacQueryables;
   filters: StacItemFilter;
+
+  bbox: number[];
+  setBbox: (bbox: number[]) => void;
 }
 
 const StacContext = createContext<StacContextType | undefined>(undefined);
@@ -64,6 +67,7 @@ export function StacProvider({ children }: StacProviderProps) {
     itemIdFilter: { itemId: undefined },
     dateFilter: { startDate: undefined, endDate: undefined }
   });
+  const [bbox, setBbox] = useState<number[]>([-180, -90, 180, 90]);
 
   const {
     data: stacCollections,
@@ -75,7 +79,7 @@ export function StacProvider({ children }: StacProviderProps) {
     data: stacItems,
     isLoading: isStacItemsLoading,
     error: isStacItemsError
-  } = useStacItems(selectedCollection, filters);
+  } = useStacItems(selectedCollection, filters, bbox);
 
   const {
     data: stacQueryables,
@@ -113,7 +117,10 @@ export function StacProvider({ children }: StacProviderProps) {
     handleSelectCollection,
     handleSelectQueryable,
     handleSetFilter,
-    setSelectedItem
+    setSelectedItem,
+
+    bbox,
+    setBbox
   };
 
   return <StacContext.Provider value={value}>{children}</StacContext.Provider>;
