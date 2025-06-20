@@ -3,7 +3,6 @@ import { Feature, FeatureCollection, Geometry } from 'geojson';
 import {
   GeoJSONSource,
   LngLatBounds,
-  LngLatBoundsLike,
   Map,
   Marker,
   RasterTileSource
@@ -29,14 +28,8 @@ export default function MapComponent({
   zoom = 1,
   onSelect
 }: MapComponentProps) {
-  const {
-    selectedItem,
-    selectedCollection,
-    filters,
-    setSelectedItem,
-    setBbox,
-    bbox
-  } = useStac();
+  const { selectedCollection, filters, setSelectedItem, setBbox, bbox } =
+    useStac();
   const map = useRef<Map | null>(null);
   const markersRef = useRef<Marker[]>([]);
   const { data: stacItems, isLoading } = useStacItems(
