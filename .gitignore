@@ -72,3 +72,4 @@ dist
 parcel-bundle-reports
 **/.claude/settings.local.json
 .env
+.python-version
