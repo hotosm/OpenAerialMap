@@ -18,7 +18,7 @@ See Vite's documentation on [env variables](https://vite.dev/guide/env-and-mode.
 
 Testing and deployment is taken care of by Github Actions. It is set up to:
 
-1. build and deploy the application to Github Pages on pushes to the `frontend-prototype` branch
+1. build and deploy the application to Github Pages on pushes to the `main` branch
 
 To make sure that the site deploys, make sure that the `pnpm-lock.yaml` file is up to date with `package.json`.
 
