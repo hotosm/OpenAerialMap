@@ -4,8 +4,7 @@ setBasePath(
   'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/'
 );
 
-import { useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import Detail from '$components/detail';
 import {
   // useQuery,
   // useMutation,
@@ -13,10 +12,11 @@ import {
   QueryClient,
   QueryClientProvider
 } from '@tanstack/react-query';
+import { useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import MapComponent from './components/map';
 import Sidebar from './components/sidebar';
 import { StacProvider } from './context/StacContext';
-import Detail from '$components/detail';
 
 // If using a router add the public url to the base path.
 // const publicUrl = process.env.BASE_URL || '';
