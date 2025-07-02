@@ -1,15 +1,16 @@
-import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select.js';
-import {
-  SlCopyButton,
-  SlDialog,
-  SlIcon
-} from '@shoelace-style/shoelace/dist/react';
-import SlButton from '@shoelace-style/shoelace/dist/react/button/index.js';
-import SlInput from '@shoelace-style/shoelace/dist/react/input/index.js';
-import SlOption from '@shoelace-style/shoelace/dist/react/option/index.js';
-import type { SlChangeEvent } from '@shoelace-style/shoelace/dist/react/select/index.js';
-import SlSelect from '@shoelace-style/shoelace/dist/react/select/index.js';
-import SlSpinner from '@shoelace-style/shoelace/dist/react/spinner/index.js';
+import type WaSelect from '@awesome.me/webawesome/dist/components/select/select.js';
+import type { WaSelectionChangeEvent } from '@awesome.me/webawesome/dist/webawesome.js';
+
+import '@awesome.me/webawesome/dist/components/drawer/drawer.js';
+import '@awesome.me/webawesome/dist/components/button/button.js';
+import '@awesome.me/webawesome/dist/components/copy-button/copy-button.js';
+import '@awesome.me/webawesome/dist/components/spinner/spinner.js';
+import '@awesome.me/webawesome/dist/components/icon/icon.js';
+import '@awesome.me/webawesome/dist/components/select/select.js';
+import '@awesome.me/webawesome/dist/components/option/option.js';
+import '@awesome.me/webawesome/dist/components/dialog/dialog.js';
+import '@awesome.me/webawesome/dist/components/input/input.js';
+
 import { useEffect, useState } from 'react';
 import { useStac } from '../context/StacContext';
 import { StacFeatureCollection } from '../types/stac';
@@ -21,8 +22,8 @@ function CollectionDropdown() {
 
   if (!availableCollections) return null;
 
-  const handleChange = (event: SlChangeEvent) => {
-    const select = event.target as SlSelectElement;
+  const collectionChanged = (event: WaSelectionChangeEvent) => {
+    const select = event.target as WaSelect;
     if (select && select.value) {
       const value = Array.isArray(select.value)
         ? select.value[0]
@@ -39,43 +40,42 @@ function CollectionDropdown() {
 
   return (
     <div>
-      <SlSelect
+      <wa-select
         placeholder='Select a collection'
         size='medium'
         style={{ width: '100%' }}
-        onSlChange={handleChange}
+        onChange={collectionChanged}
       >
         {availableCollections.map((collection) => (
-          <SlOption key={`collection-${collection.id}`} value={collection.id}>
+          <wa-option key={`collection-${collection.id}`} value={collection.id}>
             {collection.title}
-          </SlOption>
+          </wa-option>
         ))}
-      </SlSelect>
+      </wa-select>
       {collectionWmtsEndpoint && (
-        <SlButton
+        <wa-button
           style={{ marginTop: '1em', marginBottom: '1em' }}
           onClick={() => setDialogOpen(true)}
         >
           Get WMTS endpoint
-        </SlButton>
+        </wa-button>
       )}
-      <SlDialog
+      <wa-dialog
         label='WMTS endpoint'
         open={dialogOpen}
-        onSlAfterHide={() => setDialogOpen(false)}
-        // @ts-expect-error: 2353
-        style={{ '--width': '50vw' }} // typescript yells about this but it's what the docs say to do: https://shoelace.style/components/dialog
+        wa-after-hide={() => setDialogOpen(false)}
+        style={{ '--width': '50vw' }}
       >
         {collectionWmtsEndpoint}
-        <SlCopyButton value={collectionWmtsEndpoint} />
-        <SlButton
+        <wa-copy-button value={collectionWmtsEndpoint} />
+        <wa-button
           slot='footer'
           variant='primary'
           onClick={() => setDialogOpen(false)}
         >
           Close
-        </SlButton>
-      </SlDialog>
+        </wa-button>
+      </wa-dialog>
     </div>
   );
 }
@@ -136,12 +136,12 @@ function SelectableItems({
         Latest uploads
       </h3>
 
-      <SlButton
+      <wa-button
         variant='primary'
         onClick={() => setShowDetailPane(isDetailPaneShown ? false : true)}
       >
         {isDetailPaneShown ? 'Hide' : 'Show'} selected item details
-      </SlButton>
+      </wa-button>
 
       <div
         style={{
@@ -204,7 +204,7 @@ function SelectableItems({
                     {producerName}
                   </span>
                 </div>
-                <SlIcon
+                <wa-icon
                   name='info-square'
                   style={{ cursor: 'pointer' }}
                   onClick={() => {
@@ -225,8 +225,8 @@ function SelectableItems({
 function FilterComponent() {
   const { filters, handleSetFilter } = useStac();
 
-  const handleDatePresetChange = (event: SlChangeEvent) => {
-    const select = event.target as SlSelectElement;
+  const handleDatePresetChange = (event: WaSelectionChangeEvent) => {
+    const select = event.target as WaSelect;
     const preset = select.value as string;
 
     let startDate = '';
@@ -275,35 +275,35 @@ function FilterComponent() {
 
   return (
     <div>
-      <SlInput
+      <wa-input
         label='Item ID'
         value={filters['itemIdFilter'].itemId || ''}
         placeholder='Item ID...'
-        onSlChange={(e) => {
+        onChange={(e: any) => {
           handleSetFilter({
             ...filters,
             itemIdFilter: { itemId: (e.target as HTMLInputElement).value }
           });
         }}
       />
-      <SlSelect
+      <wa-select
         label='Date Presets'
         placeholder='Select date range...'
         size='medium'
         style={{ width: '100%', marginBottom: '0.5rem' }}
-        onSlChange={handleDatePresetChange}
+        onChange={handleDatePresetChange}
       >
-        <SlOption value='all'>All</SlOption>
-        <SlOption value='last-week'>Last Week</SlOption>
-        <SlOption value='last-month'>Last Month</SlOption>
-        <SlOption value='last-year'>Last Year</SlOption>
-      </SlSelect>
-      <SlInput
+        <wa-option value='all'>All</wa-option>
+        <wa-option value='last-week'>Last Week</wa-option>
+        <wa-option value='last-month'>Last Month</wa-option>
+        <wa-option value='last-year'>Last Year</wa-option>
+      </wa-select>
+      <wa-input
         label='Start'
         type='date'
         value={filters['dateFilter'].startDate || undefined}
         placeholder='Start...'
-        onSlChange={(e) => {
+        onChange={(e: any) => {
           handleSetFilter({
             ...filters,
             dateFilter: {
@@ -313,12 +313,12 @@ function FilterComponent() {
           });
         }}
       />
-      <SlInput
+      <wa-input
         label='End'
         type='date'
         value={filters['dateFilter'].endDate || undefined}
         placeholder='End...'
-        onSlChange={(e) => {
+        onChange={(e: any) => {
           handleSetFilter({
             ...filters,
             dateFilter: {
@@ -328,7 +328,7 @@ function FilterComponent() {
           });
         }}
       />
-      {/* <SlButton variant='primary'>Filter</SlButton> */}
+      {/* <wa-button variant='primary'>Filter</wa-button> */}
     </div>
   );
 }
@@ -375,7 +375,7 @@ export default function Sidebar({
         OpenAerialMap STAC Catalog
       </h2>
 
-      {isStacCollectionLoading && <SlSpinner />}
+      {isStacCollectionLoading && <wa-spinner />}
 
       {isStacCollectionsError && <span>Failed to load STAC catalog</span>}
 
@@ -413,7 +413,7 @@ export default function Sidebar({
         </div>
       )}
 
-      {isStacItemsLoading && <SlSpinner />}
+      {isStacItemsLoading && <wa-spinner />}
 
       {isStacItemsError && <span>Failed to load STAC items</span>}
 

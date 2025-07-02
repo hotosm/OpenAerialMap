@@ -40,25 +40,22 @@
           sans-serif;
       }
     </style>
+
+    <!-- Web Awesome Styling (CDN) -->
+    <link
+      rel="stylesheet"
+      href="https://early.webawesome.com/webawesome@3.0.0-beta.1/dist/styles/themes/default.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://early.webawesome.com/webawesome@3.0.0-beta.1/dist/styles/webawesome.css"
+    />
   </head>
 
   <body>
     <div id="app-container">
       <!-- Content rendered here via React -->
     </div>
-
-    <script>
-      // https://stackoverflow.com/a/9851769/728583
-
-      // internet explorer 6-11
-      var isIE = /*@cc_on!@*/ false || !!document.documentMode;
-
-      if (isIE) {
-        document.body.innerHTML =
-          'Unfortunately, your browser is not currently supported.<br />Recommended browsers: Edge, Firefox, Safari, Chrome';
-      }
-    </script>
-
     <script src="./app/main.tsx" type="module"></script>
   </body>
 </html>

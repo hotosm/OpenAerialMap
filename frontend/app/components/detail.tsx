@@ -1,11 +1,13 @@
 import React from 'react';
+
+import '@awesome.me/webawesome/dist/components/drawer/drawer.js';
+import '@awesome.me/webawesome/dist/components/button/button.js';
+import '@awesome.me/webawesome/dist/components/button-group/button-group.js';
+import '@awesome.me/webawesome/dist/components/icon/icon.js';
+import '@awesome.me/webawesome/dist/components/divider/divider.js';
+
 import { useStac } from '../context/StacContext';
 import { StacItem } from 'stac-ts';
-import SlDrawer from '@shoelace-style/shoelace/dist/react/drawer/index.js';
-import SlButton from '@shoelace-style/shoelace/dist/react/button/index.js';
-import SlIcon from '@shoelace-style/shoelace/dist/react/icon/index.js';
-import SlDivider from '@shoelace-style/shoelace/dist/react/divider/index.js';
-import SlButtonGroup from '@shoelace-style/shoelace/dist/react/button-group/index.js';
 
 interface DetailProps {
   isDetailPaneShown: boolean;
@@ -37,11 +39,11 @@ export default function Detail({
   const totalResults = stacItems?.features.length ?? 0;
 
   return (
-    <SlDrawer
+    <wa-drawer
       label={title}
       placement='start'
       open={isDetailPaneShown}
-      onSlAfterHide={() => setShowDetailPane(false)}
+      wa-after-hide={() => setShowDetailPane(false)}
       style={{ '--size': '420px' } as React.CSSProperties}
     >
       <div
@@ -105,19 +107,19 @@ export default function Detail({
                 justifyContent: 'space-between'
               }}
             >
-              <SlButton size='small' variant='text'>
-                <SlIcon slot='prefix' name='eye' />
+              <wa-button size='small' variant='text'>
+                <wa-icon slot='prefix' name='eye' />
                 Display as
-              </SlButton>
+              </wa-button>
               <div>
-                <SlButtonGroup>
-                  <SlButton size='small' variant='default'>
+                <wa-button-group>
+                  <wa-button size='small' variant='default'>
                     TMS
-                  </SlButton>
-                  <SlButton size='small' variant='default'>
+                  </wa-button>
+                  <wa-button size='small' variant='default'>
                     Thumbnail
-                  </SlButton>
-                </SlButtonGroup>
+                  </wa-button>
+                </wa-button-group>
               </div>
             </div>
           </div>
@@ -135,7 +137,7 @@ export default function Detail({
               <div
                 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                <SlIcon name='box-arrow-up-right' />
+                <wa-icon name='box-arrow-up-right' />
                 <span>Open in</span>
               </div>
               <div>
@@ -168,7 +170,7 @@ export default function Detail({
               <div
                 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                <SlIcon name='clipboard' />
+                <wa-icon name='clipboard' />
                 <span>Copy image URL</span>
               </div>
               <div>
@@ -192,7 +194,7 @@ export default function Detail({
             </div>
           </div>
 
-          <SlDivider style={{ margin: '16px 0' }} />
+          <wa-divider style={{ margin: '16px 0' }} />
 
           {/* Metadata table */}
           <div style={{ margin: '16px 0' }}>
@@ -300,7 +302,7 @@ export default function Detail({
           width: '100%'
         }}
       >
-        <SlButton
+        <wa-button
           size='small'
           variant='text'
           disabled={currentIndex <= 0}
@@ -311,15 +313,15 @@ export default function Detail({
             }
           }}
         >
-          <SlIcon slot='prefix' name='chevron-left' />
+          <wa-icon slot='prefix' name='chevron-left' />
           Previous
-        </SlButton>
+        </wa-button>
 
         <div>
           {currentIndex + 1} of {totalResults} results
         </div>
 
-        <SlButton
+        <wa-button
           size='small'
           variant='text'
           disabled={currentIndex >= totalResults - 1}
@@ -331,9 +333,9 @@ export default function Detail({
           }}
         >
           Next
-          <SlIcon slot='suffix' name='chevron-right' />
-        </SlButton>
+          <wa-icon slot='suffix' name='chevron-right' />
+        </wa-button>
       </div>
-    </SlDrawer>
+    </wa-drawer>
   );
 }
