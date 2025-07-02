@@ -12,11 +12,13 @@ This project uses [uv](https://docs.astral.sh/uv/getting-started/installation/) 
 dependencies.
 
 Once `uv` is installed, you can install the dependencies by,
+
 ```
 uv sync --all-groups
 ```
 
 You can spin up the STAC FastAPI PgSTAC application using Docker Compose,
+
 ```
 docker compose up app
 ```
