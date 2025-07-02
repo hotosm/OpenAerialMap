@@ -12,8 +12,8 @@ importers:
         specifier: 3.0.0-beta.1
         version: 3.0.0-beta.1(@floating-ui/utils@0.2.10)
       '@hotosm/ui':
-        specifier: 0.3.1-b1
-        version: 0.3.1-b1
+        specifier: 0.3.1-b4
+        version: 0.3.1-b4(@floating-ui/utils@0.2.10)
       '@tanstack/react-query':
         specifier: ^5.81.5
         version: 5.81.5(react@19.1.0)
@@ -570,8 +570,8 @@ packages:
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
 
-  '@hotosm/ui@0.3.1-b1':
-    resolution: {integrity: sha512-mzf8v3jff1H4CEausEILTgZsvJxEnLnjYtIfUNyxLWTNYh2x60z4PdsJtYVgHKDyci7z+DCTMJ4/HhDo+tuztg==}
+  '@hotosm/ui@0.3.1-b4':
+    resolution: {integrity: sha512-dCpLYFXUzHBAQ954saCCCD7tHTWeBr4C4dptev8wnSJfSOHKngdAxYAuCyJ7dvrUwYpoHJ2GbiVJPZZQWBCHUg==}
     engines: {node: '>=14.17.0'}
 
   '@humanfs/core@0.19.1':
@@ -3642,10 +3642,13 @@ snapshots:
 
   '@floating-ui/utils@0.2.10': {}
 
-  '@hotosm/ui@0.3.1-b1':
+  '@hotosm/ui@0.3.1-b4(@floating-ui/utils@0.2.10)':
     dependencies:
+      '@awesome.me/webawesome': 3.0.0-beta.1(@floating-ui/utils@0.2.10)
       class-variance-authority: 0.7.1
       lit: 3.3.0
+    transitivePeerDependencies:
+      - '@floating-ui/utils'
 
   '@humanfs/core@0.19.1': {}
 
