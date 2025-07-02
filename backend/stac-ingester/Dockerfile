@@ -8,6 +8,9 @@ ENV UV_MANAGED_PYTHON=false
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
+# Install dependencies for,
+# * Git sources
+# * building wheels (if needed)
 RUN apt-get update && \
     apt-get -y upgrade && \
     apt-get install -y build-essential git && \
@@ -31,6 +34,12 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-editable
 
 FROM python:${PYTHON_VERSION}-slim AS prod
+
+# "rasterio" needs libexpat1
+RUN apt-get update && \
+    apt-get install -y libexpat1 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=builder --chown=app:app /app /app
