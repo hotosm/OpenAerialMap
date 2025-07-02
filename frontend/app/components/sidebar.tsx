@@ -270,7 +270,7 @@ function FilterComponent() {
         label='Item ID'
         value={filters['itemIdFilter'].itemId || ''}
         placeholder='Item ID...'
-        wa-change={(e) => {
+        onChange={(e: any) => {
           handleSetFilter({
             ...filters,
             itemIdFilter: { itemId: (e.target as HTMLInputElement).value }
@@ -282,7 +282,7 @@ function FilterComponent() {
         placeholder='Select date range...'
         size='medium'
         style={{ width: '100%', marginBottom: '0.5rem' }}
-        wa-change={handleDatePresetChange}
+        onChange={handleDatePresetChange}
       >
         <wa-option value='all'>All</wa-option>
         <wa-option value='last-week'>Last Week</wa-option>
@@ -294,7 +294,7 @@ function FilterComponent() {
         type='date'
         value={filters['dateFilter'].startDate || undefined}
         placeholder='Start...'
-        wa-change={(e) => {
+        onChange={(e: any) => {
           handleSetFilter({
             ...filters,
             dateFilter: {
@@ -309,7 +309,7 @@ function FilterComponent() {
         type='date'
         value={filters['dateFilter'].endDate || undefined}
         placeholder='End...'
-        wa-change={(e) => {
+        onChange={(e: any) => {
           handleSetFilter({
             ...filters,
             dateFilter: {
