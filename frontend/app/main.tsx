@@ -1,8 +1,5 @@
-import '@shoelace-style/shoelace/dist/themes/light.css';
-import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path.js';
-setBasePath(
-  'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/'
-);
+
+import { allDefined } from 'https://early.webawesome.com/webawesome@3.0.0-beta.1/dist/webawesome.js';
 
 import Detail from '$components/detail';
 import {
@@ -20,6 +17,9 @@ import { StacProvider } from './context/StacContext';
 
 // If using a router add the public url to the base path.
 // const publicUrl = process.env.BASE_URL || '';
+
+// Ensure all WebAwesome components are loaded before rendering
+await allDefined();
 
 const queryClient = new QueryClient();
 
