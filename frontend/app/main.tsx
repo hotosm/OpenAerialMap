@@ -1,3 +1,4 @@
+import '@hotosm/ui/dist/components/header/header.js';
 import { allDefined } from '@awesome.me/webawesome/dist/webawesome.js';
 
 import Detail from '$components/detail';
@@ -35,6 +36,13 @@ function AppContent() {
   const [showDetailPane, setShowDetailPane] = useState(false);
   return (
     <StacProvider>
+      <hot-header
+        title="OpenAerialMap"
+        logo="https://data.humdata.org/image/2018-05-02-135324.187483Hot_logo_with_text_300x125.png"
+        showLogin
+        osm-oauth-client-id="9qmECyRwBNFyqNl9LszwHX1WOxKFKeBsA5ofAS1GJGY"
+        osm-oauth-redirect-uri="https://hotosm.github.io/openaerialmap/"
+      ></hot-header>
       <Sidebar
         isDetailPaneShown={showDetailPane}
         setShowDetailPane={setShowDetailPane}
