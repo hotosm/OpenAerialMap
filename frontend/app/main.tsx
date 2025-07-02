@@ -1,4 +1,3 @@
-
 import { allDefined } from 'https://early.webawesome.com/webawesome@3.0.0-beta.1/dist/webawesome.js';
 
 import Detail from '$components/detail';
