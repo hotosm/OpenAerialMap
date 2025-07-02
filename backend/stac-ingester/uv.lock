@@ -137,6 +137,17 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6b/b6/82c7e601d6d3c3278c40b7bd35e17e82aa227f050aa9f66cb7b7fce29471/fire-0.7.0.tar.gz", hash = "sha256:961550f07936eaf65ad1dc8360f2b2bf8408fad46abbfa4d2a3794f8d2a95cdf", size = 87189 }
 
 [[package]]
+name = "hotosm-stac-ingester"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "stactools-hotosm", extra = ["ingest"] },
+]
+
+[package.metadata]
+requires-dist = [{ name = "stactools-hotosm", extras = ["ingest"], git = "https://github.com/hotosm/stactools-hotosm" }]
+
+[[package]]
 name = "hydraters"
 version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -649,20 +660,9 @@ wheels = [
 ]
 
 [[package]]
-name = "stac-ingester"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "stactools-hotosm", extra = ["ingest"] },
-]
-
-[package.metadata]
-requires-dist = [{ name = "stactools-hotosm", extras = ["ingest"], git = "https://github.com/hotosm/stactools-hotosm?rev=fix%2Fingest-as-opt-dep" }]
-
-[[package]]
 name = "stactools-hotosm"
 version = "0.1.0"
-source = { git = "https://github.com/hotosm/stactools-hotosm?rev=fix%2Fingest-as-opt-dep#46691e8fe851a8b297a439dcf3099884ee82bac9" }
+source = { git = "https://github.com/hotosm/stactools-hotosm#c2582ecccadad9283ac1139081037af5eff7a4ea" }
 dependencies = [
     { name = "pystac", extra = ["validation"] },
     { name = "requests" },
