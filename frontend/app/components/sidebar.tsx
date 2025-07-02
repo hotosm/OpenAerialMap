@@ -1,5 +1,15 @@
-import type WaSelect from 'https://early.webawesome.com/webawesome@3.0.0-beta.1/dist/components/select/select.js';
-import type { WaSelectionChangeEvent } from 'https://early.webawesome.com/webawesome@3.0.0-beta.1/dist/webawesome.js';
+import type WaSelect from '@awesome.me/webawesome/dist/components/select/select.js';
+import type { WaSelectionChangeEvent } from '@awesome.me/webawesome/dist/webawesome.js';
+
+import '@awesome.me/webawesome/dist/components/drawer/drawer.js';
+import '@awesome.me/webawesome/dist/components/button/button.js';
+import '@awesome.me/webawesome/dist/components/copy-button/copy-button.js';
+import '@awesome.me/webawesome/dist/components/spinner/spinner.js';
+import '@awesome.me/webawesome/dist/components/icon/icon.js';
+import '@awesome.me/webawesome/dist/components/select/select.js';
+import '@awesome.me/webawesome/dist/components/option/option.js';
+import '@awesome.me/webawesome/dist/components/dialog/dialog.js';
+import '@awesome.me/webawesome/dist/components/input/input.js';
 
 import { useEffect, useState } from 'react';
 import { useStac } from '../context/StacContext';
@@ -54,8 +64,7 @@ function CollectionDropdown() {
         label='WMTS endpoint'
         open={dialogOpen}
         wa-after-hide={() => setDialogOpen(false)}
-        // @ts-expect-error: 2353
-        style={{ '--width': '50vw' }} // typescript yells about this but it's what the docs say to do: https://shoelace.style/components/dialog
+        style={{ '--width': '50vw' }}
       >
         {collectionWmtsEndpoint}
         <wa-copy-button value={collectionWmtsEndpoint} />

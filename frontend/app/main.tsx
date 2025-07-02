@@ -1,4 +1,4 @@
-import { allDefined } from 'https://early.webawesome.com/webawesome@3.0.0-beta.1/dist/webawesome.js';
+import { allDefined } from '@awesome.me/webawesome/dist/webawesome.js';
 
 import Detail from '$components/detail';
 import {
@@ -10,6 +10,7 @@ import {
 } from '@tanstack/react-query';
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
+
 import MapComponent from './components/map';
 import Sidebar from './components/sidebar';
 import { StacProvider } from './context/StacContext';
