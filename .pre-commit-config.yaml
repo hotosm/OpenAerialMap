@@ -1,0 +1,101 @@
+repos:
+  # Versioning: Commit messages & changelog
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.8.3
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # Lint / autoformat: Python code
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: "v0.11.13"
+    hooks:
+      # Run the linter
+      - id: ruff
+        files: ^uploader-api/(?:.*/)*.*$
+        args: [--fix, --exit-non-zero-on-fix]
+      # Run the formatter
+      - id: ruff-format
+        files: ^uploader-api/(?:.*/)*.*$
+
+  # Deps: ensure Python uv lockfile is up to date
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.7.13
+    hooks:
+      - id: uv-lock
+        files: notebooks/pyproject.toml
+        args: [--project, notebooks]
+
+  # Upgrade: upgrade Python syntax
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.20.0
+    hooks:
+      - id: pyupgrade
+
+  # Spelling: Checks for common misspellings in text files.
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        types: [text]
+        args: [--toml, notebooks/pyproject.toml]
+
+  # Autoformat: YAML, JSON, Markdown, etc.
+  - repo: https://github.com/pycontribs/mirrors-prettier
+    rev: v3.5.3
+    hooks:
+      - id: prettier
+        args:
+          [
+            --ignore-unknown,
+            --no-error-on-unmatched-pattern,
+            "!CHANGELOG.md",
+            "!frontend/pnpm-lock.yaml",
+          ]
+
+  # # Lint: Dockerfile (disabled until binary is bundled)
+  # - repo: https://github.com/hadolint/hadolint.git
+  #   rev: v2.12.1-beta
+  #   hooks:
+  #     - id: hadolint
+  #       args:
+  #         [
+  #           "--ignore=DL3008",
+  #           "--ignore=DL3013",
+  #           "--ignore=DL3018",
+  #           "--ignore=DL3059",
+  #         ]
+
+  # Lint: Bash scripts
+  - repo: https://github.com/openstack-dev/bashate.git
+    rev: 2.1.1
+    hooks:
+      - id: bashate
+
+  # Lint: Shell scripts
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: ["-x"]
+
+  # Lint: Markdown
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        args:
+          [
+            --fix,
+            --ignore,
+            CHANGELOG.md,
+            --ignore,
+            .github,
+            --ignore,
+            metadata/README.md,
+            --ignore,
+            frontend/README.md,
+            --ignore,
+            frontend/_README.md,
+          ]

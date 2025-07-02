@@ -1,106 +1,77 @@
-# OpenAerialMap
+<!-- markdownlint-disable -->
+<p align="center">
+    <!-- github-banner-start -->
+    <img src="https://raw.githubusercontent.com/hotosm/openaerialmap/main/docs/images/hot_logo.png" alt="HOTOSM Logo" width="25%" height="auto" />
+    <!-- github-banner-end -->
+</p>
 
-[![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
+<div align="center">
+    <h1>OpenAerialMap</h1>
+    <p>OpenAerialMap is an open service to provide access to a commons of openly licensed imagery and map layer services.</p>
+    <a href="https://github.com/hotosm/openaerialmap/releases">
+        <img src="https://img.shields.io/github/v/release/hotosm/openaerialmap?logo=github" alt="Release Version" />
+    </a>
+</div>
 
-## Introduction
+</br>
 
-OpenAerialMap (OAM) is the largest public repository of openly licensed high-resolution satellite and drone imagery, fostering a community dedicated to improving access to critical geospatial data. OAM provides a simple, sustainable, and scalable platform for hosting, sharing, and discovering imagery, empowering humanitarian responders, disaster preparedness efforts, and countless other applications.
+<!-- prettier-ignore-start -->
+<div align="center">
 
-## Goals
+| **CI/CD** | | [![Deploy](https://github.com/hotosm/openaerialmap/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/hotosm/openaerialmap/actions/workflows/deploy.yml?query=branch%3Amain) |
+| :--- | :--- | :--- |
+| **Tech Stack** | | ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white) ![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white) ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white) |
+| **Code Style** | | [![Backend Style](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/format.json&labelColor=202235)](https://github.com/astral-sh/ruff) [![Frontend Style](https://img.shields.io/badge/code%20style-prettier-F7B93E?logo=Prettier)](https://github.com/prettier/prettier) [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/hotosm/OpenAerialMap/main.svg)](https://results.pre-commit.ci/latest/github/hotosm/OpenAerialMap/main) |
+| **Community** | | [![Slack](https://img.shields.io/badge/Slack-Join%20the%20community!-d63f3f?style=for-the-badge&logo=slack&logoColor=d63f3f)](https://slack.hotosm.org) [![All Contributors](https://img.shields.io/github/contributors/hotosm/openaerialmap?logo=github)](#contributors-) |
+| **Other Info** | | [![license-code](https://img.shields.io/github/license/hotosm/openaerialmap.svg)](https://github.com/hotosm/openaerialmap/blob/main/LICENSE.md) |
 
-*   Provide a **centralized platform** for accessing openly licensed satellite and aerial imagery.
-*   **Simplify the discovery** of imagery through a user-friendly interface and API.
-*   Allow contributors to **easily upload and share** their imagery.
-*   **Enable collaboration** among organizations and individuals working with aerial imagery.
-*   **Ensure long-term sustainability** through a distributed and scalable architecture.
-*   **Promote the use of open imagery** for mapping in OpenStreetMap.
+</div>
 
-## Features
+---
 
-*   **Search and Discovery:** Easily find imagery based on location, date, sensor, provider, and other metadata.
-*   **API:** Access imagery and metadata through a standardized API.
-*   **Data Upload:** Contribute your own openly licensed imagery to the platform.
-*   **Tiling Services:** Efficiently visualize large imagery datasets using dynamic tiling.
-*   **Open Source:** The entire platform is built with open-source technologies and is available for community contributions.
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
 
-## Technology Stack
+A revamp of OpenAerialMap, originally developed back in the 2010's.
 
-OAM is built on a cloud-native architecture leveraging the following technologies:
+## Components
 
-*   **Backend:** Node.js, MongoDB
-*   **Frontend:** React, Redux, Mapbox GL JS
-*   **Infrastructure:** AWS (including S3, EC2, Batch, Lambda)
-*   **COG (Cloud Optimized GeoTIFF):** For efficient imagery storage and access
+- Backend
+  - [STAC API][4] deployment of eoAPI.
+  - [STAC Extension][3] for OAM metadata requirements, data ingestion.
+- New Frontend: Hosted in this repo.
+- Old Frontend: <https://github.com/hotosm/oam-browser> (currently used as frontend)
+- Old API: <https://github.com/hotosm/oam-api> (currently used for login / upload)
 
-Please note: The aging OAM system presents increasing maintenance challenges due to its outdated design and technology. This impacts system reliability and maintainability. HOT and its partners are actively pursuing resources to modernize OAM.
+## Contributing 👍🎉
 
-## Current Status
+We would really welcome contributions for:
 
-In December 2024, HOT received a Cisco CyberGrant to modernize OAM.  This grant will fund the upgrading to a fully STAC-compliant architecture, improving scalability, interoperability, and maintainability.
+- Backend Python development
+- Frontend Typescript development
+- Documentation writers
+- UI / UX designers
+- Testers!
 
-**Key planned efforts include:**
+Please take a look at our [Documentation][1] and
+[contributor guidance][2] for more details!
 
-*   Migrating the existing metadata database to a STAC catalog.
-*   Developing a new STAC-based API.
-*   Rebuilding the frontend to interact with the new API.
-*   Updating the documentation.
-
-**Future improvements will focus on:**
-*   Improving the upload and processing pipeline.
-*   Integrating OAM with other imagery processing software.
-*   Supporting other imagery formats and raster data types (e.g. DTMs, DSMs, multispectral imagery, etc).
+Reach out to us if any questions!
 
 ## Roadmap
 
 <!-- prettier-ignore-start -->
-| Status | Feature |
-|:--:| :-- |
-|⚙️| Implement STAC API |
-|⚙️| Migrate existing imagery to STAC |
-|⚙️| Implement tiling services with TiTiler |
-| | Frontend rebuild using new STAC based API |
-| | 📢 Release of new STAC based API and frontend |
-| | Documentation updates |
-| | Testing and training |
-| | Revamped uploader and uploader API |
-| | New user management system |
-| | Improved statistics and user engagement |
-| | Add support for other EO data |
-
+| Status | Feature | Release |
+|:------:|:-------:|:--------|
+| ✅ | Kubernetes based deployment of eoAPI for OAM STAC | - |
+| ✅ | STAC extension for OAM and metadata ingested from old API | - |
+| ✅ | Prototype frontend based on STAC | - |
+| 🔄 | New frontend feature parity with old frontend | |
+| 📅 | New metadata / user API | – |
+| 📅 | New uploader API & UI | – |
 <!-- prettier-ignore-end -->
 
-## How to Contribute
-
-We welcome contributions from the community! There are many ways to get involved:
-
-*   **Code Contributions:** Help us develop new features, improve existing code, and fix bugs.
-*   **Documentation:** Improve the [documentation](https://docs.openaerialmap.org/ecosystem/) to make it easier for others to use and contribute to OAM.
-*   **Testing:** Help us test the platform and report any issues you find.
-*   **Feedback:** Share your ideas and suggestions for improving OAM.
-*   **Imagery Contribution:** Share your openly licensed imagery through the [OAM uploader](https://map.openaerialmap.org/#/upload?).
-
-The best place to jump into discussions about OpenAerialMap is on the [main issue tracker](https://github.com/hotosm/OpenAerialMap/issues) or individual ones for repos listed below.
-
-Ongoing and past converations about the project take place in the OpenAerialMap Slack channel at https://slack.hotosm.org
-
-## Getting Started
-
-*   **Website:** [www.openaerialmap.org](https://openaerialmap.org/)
-*   **Documentation:** [docs.openaerialmap.org](https://docs.openaerialmap.org/ecosystem/)
-*   **Source Code:** active and archived [repositories](https://github.com/orgs/hotosm/repositories?language=&q=oam&sort=&type=all) part of OAM
-
-## License
-
-The OAM software is licensed under the BSD 2-Clause License, unless otherwise specified.
-
-All imagery is publicly licensed and made available through the Humanitarian OpenStreetMap Team's [Open Imagery Network](https://openimagerynetwork.github.io/) (OIN) Node. All imagery contained in OIN is licensed CC-BY 4.0, with attribution as contributors of Open Imagery Network. All imagery is available to be traced in OpenStreetMap.
-
-## Contact
-
-*   **Slack:** #OpenAerialMap and #oam-dev on the [HOT Slack](https://slack.hotosm.org)
-*   **Email:** info [at] openaerialmap.org
-
-  
-## Acknowledgements
-
-OAM is a project of the [Humanitarian OpenStreetMap Team (HOT)](https://www.hotosm.org/) and is developed in collaboration with [Development Seed](https://developmentseed.org/), [Kontur](https://www.kontur.io/) and other [partners](https://openaerialmap.org/about/). Imagery is hosted on the [AWS Open Data Program](https://aws.amazon.com/opendata). We gratefully acknowledge the support of our funders and contributors.
+[1]: https://hotosm.github.io/openaerialmap
+[2]: https://github.com/hotosm/openaerialmap/blob/main/CONTRIBUTING.md
+[3]: https://github.com/hotosm/stactools-hotosm
+[4]: https://github.com/hotosm/k8s-infra/tree/main/kubernetes/helm
