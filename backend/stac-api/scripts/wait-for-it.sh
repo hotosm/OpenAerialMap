@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2260,SC2128,SC2064,SC2206
 # Use this script to test if a given TCP host/port are available
 
 ######################################################
@@ -29,51 +30,64 @@ USAGE
 wait_for()
 {
     if [[ $WAITFORIT_TIMEOUT -gt 0 ]]; then
-        echoerr "$WAITFORIT_cmdname: waiting $WAITFORIT_TIMEOUT seconds for $WAITFORIT_HOST:$WAITFORIT_PORT"
+        echoerr "$WAITFORIT_cmdname: waiting $WAITFORIT_TIMEOUT \
+            seconds for $WAITFORIT_HOST:$WAITFORIT_PORT"
     else
-        echoerr "$WAITFORIT_cmdname: waiting for $WAITFORIT_HOST:$WAITFORIT_PORT without a timeout"
+        echoerr "$WAITFORIT_cmdname: waiting for \
+            $WAITFORIT_HOST:$WAITFORIT_PORT without a timeout"
     fi
     WAITFORIT_start_ts=$(date +%s)
-    while :
-    do
+    while :; do
         if [[ $WAITFORIT_ISBUSY -eq 1 ]]; then
-            nc -z $WAITFORIT_HOST $WAITFORIT_PORT
+            nc -z "$WAITFORIT_HOST" "$WAITFORIT_PORT"
             WAITFORIT_result=$?
         else
-            (echo -n > /dev/tcp/$WAITFORIT_HOST/$WAITFORIT_PORT) >/dev/null 2>&1
+            (echo -n > /dev/tcp/"$WAITFORIT_HOST"/"$WAITFORIT_PORT") > \
+                /dev/null 2>&1
             WAITFORIT_result=$?
         fi
         if [[ $WAITFORIT_result -eq 0 ]]; then
             WAITFORIT_end_ts=$(date +%s)
-            echoerr "$WAITFORIT_cmdname: $WAITFORIT_HOST:$WAITFORIT_PORT is available after $((WAITFORIT_end_ts - WAITFORIT_start_ts)) seconds"
+            echoerr "$WAITFORIT_cmdname: $WAITFORIT_HOST:$WAITFORIT_PORT is \
+                available after $((WAITFORIT_end_ts - WAITFORIT_start_ts)) \
+                seconds"
             break
         fi
         sleep 1
     done
-    return $WAITFORIT_result
+    return "$WAITFORIT_result"
 }
 
 wait_for_wrapper()
 {
     # In order to support SIGINT during timeout: http://unix.stackexchange.com/a/57692
     if [[ $WAITFORIT_QUIET -eq 1 ]]; then
-        timeout $WAITFORIT_BUSYTIMEFLAG $WAITFORIT_TIMEOUT $0 --quiet --child --host=$WAITFORIT_HOST --port=$WAITFORIT_PORT --timeout=$WAITFORIT_TIMEOUT &
+        timeout $WAITFORIT_BUSYTIMEFLAG "$WAITFORIT_TIMEOUT" "$0" \
+            --quiet \
+            --child \
+            --host="$WAITFORIT_HOST" \
+            --port="$WAITFORIT_PORT" \
+            --timeout="$WAITFORIT_TIMEOUT" &
     else
-        timeout $WAITFORIT_BUSYTIMEFLAG $WAITFORIT_TIMEOUT $0 --child --host=$WAITFORIT_HOST --port=$WAITFORIT_PORT --timeout=$WAITFORIT_TIMEOUT &
+        timeout $WAITFORIT_BUSYTIMEFLAG "$WAITFORIT_TIMEOUT" "$0" \
+            --child \
+            --host="$WAITFORIT_HOST" \
+            --port="$WAITFORIT_PORT" \
+            --timeout="$WAITFORIT_TIMEOUT" &
     fi
     WAITFORIT_PID=$!
     trap "kill -INT -$WAITFORIT_PID" INT
     wait $WAITFORIT_PID
     WAITFORIT_RESULT=$?
     if [[ $WAITFORIT_RESULT -ne 0 ]]; then
-        echoerr "$WAITFORIT_cmdname: timeout occurred after waiting $WAITFORIT_TIMEOUT seconds for $WAITFORIT_HOST:$WAITFORIT_PORT"
+        echoerr "$WAITFORIT_cmdname: timeout occurred after waiting \
+            $WAITFORIT_TIMEOUT seconds for $WAITFORIT_HOST:$WAITFORIT_PORT"
     fi
     return $WAITFORIT_RESULT
 }
 
 # process arguments
-while [[ $# -gt 0 ]]
-do
+while [[ $# -gt 0 ]]; do
     case "$1" in
         *:* )
         WAITFORIT_hostport=(${1//:/ })
@@ -95,7 +109,9 @@ do
         ;;
         -h)
         WAITFORIT_HOST="$2"
-        if [[ $WAITFORIT_HOST == "" ]]; then break; fi
+        if [[ $WAITFORIT_HOST == "" ]]; then
+            break
+        fi
         shift 2
         ;;
         --host=*)
@@ -104,7 +120,9 @@ do
         ;;
         -p)
         WAITFORIT_PORT="$2"
-        if [[ $WAITFORIT_PORT == "" ]]; then break; fi
+        if [[ $WAITFORIT_PORT == "" ]]; then
+            break
+        fi
         shift 2
         ;;
         --port=*)
@@ -113,7 +131,9 @@ do
         ;;
         -t)
         WAITFORIT_TIMEOUT="$2"
-        if [[ $WAITFORIT_TIMEOUT == "" ]]; then break; fi
+        if [[ $WAITFORIT_TIMEOUT == "" ]]; then
+            break
+        fi
         shift 2
         ;;
         --timeout=*)
@@ -147,7 +167,8 @@ WAITFORIT_QUIET=${WAITFORIT_QUIET:-0}
 
 # Check to see if timeout is from busybox?
 WAITFORIT_TIMEOUT_PATH=$(type -p timeout)
-WAITFORIT_TIMEOUT_PATH=$(realpath $WAITFORIT_TIMEOUT_PATH 2>/dev/null || readlink -f $WAITFORIT_TIMEOUT_PATH)
+WAITFORIT_TIMEOUT_PATH=$(realpath "$WAITFORIT_TIMEOUT_PATH" 2>/dev/null \
+    || readlink -f "$WAITFORIT_TIMEOUT_PATH")
 
 WAITFORIT_BUSYTIMEFLAG=""
 if [[ $WAITFORIT_TIMEOUT_PATH =~ "busybox" ]]; then
@@ -177,7 +198,8 @@ fi
 
 if [[ $WAITFORIT_CLI != "" ]]; then
     if [[ $WAITFORIT_RESULT -ne 0 && $WAITFORIT_STRICT -eq 1 ]]; then
-        echoerr "$WAITFORIT_cmdname: strict mode, refusing to execute subprocess"
+        echoerr "$WAITFORIT_cmdname: strict mode, \
+            refusing to execute subprocess"
         exit $WAITFORIT_RESULT
     fi
     exec "${WAITFORIT_CLI[@]}"

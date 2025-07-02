@@ -5,11 +5,11 @@ STAC creation package, [stactools-hotosm](https://github.com/hotosm/stactools-ho
 
 ## Getting Started
 
-This project uses [uv](https://docs.astral.sh/uv/getting-started/installation/) to manage Python
-dependencies.
+This project uses [uv](https://docs.astral.sh/uv/getting-started/installation/)
+to manage Python dependencies.
 
 Once `uv` is installed, you can install the dependencies by,
 
-```
+```bash
 uv sync --all-groups
 ```
