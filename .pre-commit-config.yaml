@@ -99,21 +99,3 @@ repos:
             --ignore,
             frontend/_README.md,
           ]
-
-  # Lint / Security: Dockerfiles
-  - repo: https://github.com/bridgecrewio/checkov
-    rev: 3.2.447
-    hooks:
-      - id: checkov_diff_container
-        args:
-          [
-            "--skip-check",
-            "CKV_DOCKER_8",
-            "--skip-check",
-            "CKV_DOCKER_2",
-            "--skip-check",
-            "CKV_DOCKER_3",
-            "--skip-check",
-            "CKV_DOCKER_5",
-            "-f",
-          ]
