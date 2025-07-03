@@ -8,9 +8,6 @@ on:
       - "backend/stac-api/**"
   workflow_dispatch:
 
-env:
-  REGISTRY: ghcr.io
-
 jobs:
   image-build-and-push:
     uses: hotosm/gh-workflows/.github/workflows/image_build.yml@1.5.1
