@@ -1,0 +1,18 @@
+name: Build and Deploy STAC Ingester Backend Service to Container Registry
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/stac-ingester/**"
+  workflow_dispatch:
+
+jobs:
+  image-build-and-push:
+    uses: hotosm/gh-workflows/.github/workflows/image_build.yml@1.5.1
+    with:
+      context: backend/stac-ingester/
+      image_name: ghcr.io/${{ github.repository }}/stac-ingester
+      build_target: prod
+      dockerfile: Dockerfile

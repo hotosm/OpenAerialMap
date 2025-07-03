@@ -1,0 +1,31 @@
+services:
+  ingester:
+    container_name: hotosm-stac-ingester
+    build: .
+    environment:
+      - PGUSER=username
+      - PGPASSWORD=password
+      - PGDATABASE=postgis
+      - PGHOST=database
+      - PGPORT=5432
+    depends_on:
+      - database
+    command: bash -c "hotosm --help"
+
+  database:
+    container_name: stac-db-ingester
+    image: ghcr.io/stac-utils/pgstac:v0.9.6
+    environment:
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgis
+      - PGUSER=username
+      - PGPASSWORD=password
+      - PGDATABASE=postgis
+    ports:
+      - "5439:5432"
+    command: postgres -N 500
+
+networks:
+  default:
+    name: stac-fastapi-network
