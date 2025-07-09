@@ -325,7 +325,13 @@ export default function MapComponent({
   return (
     <div
       id='map'
-      style={{ position: 'fixed', top: 0, bottom: 0, right: 0, left: 480 }}
+      style={{
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0
+      }}
     />
   );
 }
