@@ -26,7 +26,7 @@ export default [
       // 'import/order': 2,
       'react/button-has-type': 2,
       'react/jsx-closing-bracket-location': 2,
-      'react/jsx-closing-tag-location': 2,
+      'react/jsx-closing-tag-location': 'off',
       'react/jsx-curly-spacing': 2,
       'react/jsx-curly-newline': 2,
       'react/jsx-equals-spacing': 2,
@@ -45,7 +45,7 @@ export default [
       'react/no-unused-prop-types': 2,
       'react/no-unused-state': 2,
       'react/react-in-jsx-scope': 'off',
-      'react/self-closing-comp': 2,
+      'react/self-closing-comp': 'off',
       'react/style-prop-object': 2,
       'react/void-dom-elements-no-children': 2,
       'react/function-component-definition': [
