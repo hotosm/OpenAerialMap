@@ -51,16 +51,16 @@ function AppContent() {
           height: `calc(100vh - var(--hot-spacing-4x-large))`
         }}
       >
-      <Sidebar
-        isDetailPaneShown={showDetailPane}
-        setShowDetailPane={setShowDetailPane}
-      />
-      <Detail
-        isDetailPaneShown={showDetailPane}
-        setShowDetailPane={setShowDetailPane}
-      />
+        <Sidebar
+          isDetailPaneShown={showDetailPane}
+          setShowDetailPane={setShowDetailPane}
+        />
+        <Detail
+          isDetailPaneShown={showDetailPane}
+          setShowDetailPane={setShowDetailPane}
+        />
         <div style={{ flex: 1, position: 'relative' }}>
-      <MapComponent />
+          <MapComponent />
         </div>
       </div>
     </StacProvider>
