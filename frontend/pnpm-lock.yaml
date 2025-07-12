@@ -12,14 +12,11 @@ importers:
         specifier: 3.0.0-beta.1
         version: 3.0.0-beta.1(@floating-ui/utils@0.2.10)
       '@hotosm/ui':
-        specifier: 0.3.1-b6
-        version: 0.3.1-b6(@floating-ui/utils@0.2.10)
+        specifier: 0.3.2-b4
+        version: 0.3.2-b4
       '@tanstack/react-query':
         specifier: ^5.81.5
         version: 5.81.5(react@19.1.0)
-      '@teamhanko/hanko-elements':
-        specifier: ^2.1.0
-        version: 2.1.0
       maplibre-gl:
         specifier: ^5.6.1
         version: 5.6.1
@@ -363,11 +360,6 @@ packages:
     resolution: {integrity: sha512-WyOx8cJQ+FQus4Mm4uPIZA64gbk3Wxh0so5Lcii0aJifqwoVOlfFtorjLE0Hen4OYyHZMXDWqMmaQemBhgxFRQ==}
     engines: {node: '>=14'}
 
-  '@denysvuika/preact-translate@0.5.1':
-    resolution: {integrity: sha512-qqKkpjzR8E55nlLA+H3gP9Q99mCCWiTtRupVQBh8YRZljX+Q8YbsaJtV3F+TX4DR4lV8NLgvv2+sSUcHoWvNtQ==}
-    peerDependencies:
-      preact: '>=10.13.0'
-
   '@emnapi/core@1.4.3':
     resolution: {integrity: sha512-4m62DuCE07lw01soJwPiBGC0nAww0Q+RY70VZ+n49yDIO13yyinhbWCeNnaob0lakDtWQzSdtNWzJeOJt2ma+g==}
 
@@ -578,8 +570,8 @@ packages:
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
 
-  '@hotosm/ui@0.3.1-b6':
-    resolution: {integrity: sha512-gYXm9CW+emqtnBl9nhqNwZkCpsJMxCkXrOq8aAywsitCWIOEH4dDoa6XQJw5OuSFwCSN18wT2wQSdllBi+F1fA==}
+  '@hotosm/ui@0.3.2-b4':
+    resolution: {integrity: sha512-TtA4kpfdvbudldunUVQRP0eO1YeeOOfDVwWicKGIbm3rdHJigxnZHgCznhiPLUcjKtY0pCaBPyqLOV3IntBgIw==}
     engines: {node: '>=14.17.0'}
 
   '@humanfs/core@0.19.1':
@@ -910,17 +902,6 @@ packages:
     peerDependencies:
       react: ^18 || ^19
 
-  '@teamhanko/hanko-elements@2.1.0':
-    resolution: {integrity: sha512-yVGak1fR9fCwXCgw0m+biFRkZyNlVD1iCCfyQxGeekOWdWCWj5O1CbQOIp9NdY9IukaoCFg6a4m9n4vRx4FAhA==}
-
-  '@teamhanko/hanko-frontend-sdk@2.1.0':
-    resolution: {integrity: sha512-vef8rH/ZkLpoOa7g9ggwIyYDQ0roIr1u6oSbU2spk05CaNFFH+8FqUHwLE4k2YJHTqslaiG7B6v5CdZ0Wucung==}
-
-  '@teamhanko/preact-custom-element@4.2.2':
-    resolution: {integrity: sha512-3djCQr25IxQIgpidxD8J0fTQ7/hMuoa5Nmv7delQc6sX4kXgv9e/pE01cywpmGZLi69H1KUH4dmZ4cPPJQrsQQ==}
-    peerDependencies:
-      preact: 10.x
-
   '@testing-library/dom@10.4.0':
     resolution: {integrity: sha512-pemlzrSESWbdAloYml3bAJMEfNh1Z7EduzqPKprCH5S341frlpYnUEW0H72dLxa6IsYr+mPno20GiSm+h9dEdQ==}
     engines: {node: '>=18'}
@@ -1000,9 +981,6 @@ packages:
 
   '@types/jest@30.0.0':
     resolution: {integrity: sha512-XTYugzhuwqWjws0CVz8QpM36+T+Dz5mTEBKhNs/esGLnCIlGdRy+Dq78NRjd7ls7r8BC8ZRMOrKlkO1hU0JOwA==}
-
-  '@types/js-cookie@3.0.6':
-    resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
 
   '@types/jsdom@21.1.7':
     resolution: {integrity: sha512-yOriVnggzrnQ3a9OKOCxaVuSug3w3/SbOj5i7VwXWZEyUNl3bLF9V3MfxGbZKuwqJOQyRfqXyROBB1CoZLFWzA==}
@@ -1427,19 +1405,9 @@ packages:
   cjs-module-lexer@2.1.0:
     resolution: {integrity: sha512-UX0OwmYRYQQetfrLEZeewIFFI+wSTofC+pMBLNuH3RUuu/xzG1oz84UCEDOSoQlN3fZ4+AzmV50ZYvGqkMh9yA==}
 
-  class-variance-authority@0.7.1:
-    resolution: {integrity: sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg==}
-
-  classnames@2.5.1:
-    resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
-
   cliui@8.0.1:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
     engines: {node: '>=12'}
-
-  clsx@2.1.1:
-    resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
-    engines: {node: '>=6'}
 
   co@4.6.0:
     resolution: {integrity: sha512-QVb0dM5HvG+uaxitm8wONl7jltx8dqhfU33DcqtOZcLSVIKSDDLDi7+0LbAKiyI8hD9u42m2YxXSkMGWThaecQ==}
@@ -2639,9 +2607,6 @@ packages:
   potpack@2.0.0:
     resolution: {integrity: sha512-Q+/tYsFU9r7xoOJ+y/ZTtdVQwTWfzjbiXBDMM/JKUux3+QPP02iUuIoeBQ+Ot6oEDlC+/PGjB/5A3K7KKb7hcw==}
 
-  preact@10.26.9:
-    resolution: {integrity: sha512-SSjF9vcnF27mJK1XyFMNJzFd5u3pQiATFqoaDy03XuN00u4ziveVVEGt5RKJrDR8MHE/wJo9Nnad56RLzS2RMA==}
-
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -3520,10 +3485,6 @@ snapshots:
 
   '@ctrl/tinycolor@4.1.0': {}
 
-  '@denysvuika/preact-translate@0.5.1(preact@10.26.9)':
-    dependencies:
-      preact: 10.26.9
-
   '@emnapi/core@1.4.3':
     dependencies:
       '@emnapi/wasi-threads': 1.0.2
@@ -3674,13 +3635,7 @@ snapshots:
 
   '@floating-ui/utils@0.2.10': {}
 
-  '@hotosm/ui@0.3.1-b6(@floating-ui/utils@0.2.10)':
-    dependencies:
-      '@awesome.me/webawesome': 3.0.0-beta.1(@floating-ui/utils@0.2.10)
-      class-variance-authority: 0.7.1
-      lit: 3.3.0
-    transitivePeerDependencies:
-      - '@floating-ui/utils'
+  '@hotosm/ui@0.3.2-b4': {}
 
   '@humanfs/core@0.19.1': {}
 
@@ -4073,22 +4028,6 @@ snapshots:
       '@tanstack/query-core': 5.81.5
       react: 19.1.0
 
-  '@teamhanko/hanko-elements@2.1.0':
-    dependencies:
-      '@denysvuika/preact-translate': 0.5.1(preact@10.26.9)
-      '@teamhanko/hanko-frontend-sdk': 2.1.0
-      '@teamhanko/preact-custom-element': 4.2.2(preact@10.26.9)
-      classnames: 2.5.1
-      preact: 10.26.9
-
-  '@teamhanko/hanko-frontend-sdk@2.1.0':
-    dependencies:
-      '@types/js-cookie': 3.0.6
-
-  '@teamhanko/preact-custom-element@4.2.2(preact@10.26.9)':
-    dependencies:
-      preact: 10.26.9
-
   '@testing-library/dom@10.4.0':
     dependencies:
       '@babel/code-frame': 7.27.1
@@ -4182,8 +4121,6 @@ snapshots:
     dependencies:
       expect: 30.0.3
       pretty-format: 30.0.2
-
-  '@types/js-cookie@3.0.6': {}
 
   '@types/jsdom@21.1.7':
     dependencies:
@@ -4658,19 +4595,11 @@ snapshots:
 
   cjs-module-lexer@2.1.0: {}
 
-  class-variance-authority@0.7.1:
-    dependencies:
-      clsx: 2.1.1
-
-  classnames@2.5.1: {}
-
   cliui@8.0.1:
     dependencies:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
-
-  clsx@2.1.1: {}
 
   co@4.6.0: {}
 
@@ -6189,8 +6118,6 @@ snapshots:
       source-map-js: 1.2.1
 
   potpack@2.0.0: {}
-
-  preact@10.26.9: {}
 
   prelude-ls@1.2.1: {}
 
