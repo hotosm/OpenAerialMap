@@ -1,13 +1,29 @@
 import React from 'react';
 
-import '@awesome.me/webawesome/dist/components/drawer/drawer.js';
-import '@awesome.me/webawesome/dist/components/button/button.js';
-import '@awesome.me/webawesome/dist/components/button-group/button-group.js';
-import '@awesome.me/webawesome/dist/components/icon/icon.js';
-import '@awesome.me/webawesome/dist/components/divider/divider.js';
+// async function registerWaComponents() {
+//   if (!customElements.get('wa-drawer')) {
+//     await import('@awesome.me/webawesome/dist/components/drawer/drawer.js');
+//   }
+//   if (!customElements.get('wa-icon')) {
+//     await import('@awesome.me/webawesome/dist/components/icon/icon.js');
+//   }
+//   if (!customElements.get('wa-button')) {
+//     await import('@awesome.me/webawesome/dist/components/button/button.js');
+//   }
+//   if (!customElements.get('button-group')) {
+//     await import(
+//       '@awesome.me/webawesome/dist/components/button-group/button-group.js'
+//     );
+//   }
+//   if (!customElements.get('wa-divider')) {
+//     await import('@awesome.me/webawesome/dist/components/divider/divider.js');
+//   }
+// }
 
 import { useStac } from '../context/StacContext';
 import { StacItem } from 'stac-ts';
+
+// await registerWaComponents();
 
 interface DetailProps {
   isDetailPaneShown: boolean;
