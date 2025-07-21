@@ -29,7 +29,7 @@ machine by visiting, <http://0.0.0.0:8082/api.html>.
 ## Upgrading
 
 The original source for `main.py` in this directory is:
-https://github.com/stac-utils/stac-fastapi-pgstac/blob/main/stac_fastapi/pgstac/app.py
+<https://github.com/stac-utils/stac-fastapi-pgstac/blob/main/stac_fastapi/pgstac/app.py>
 
 In order to upgrade, we should diff `main.py` against the 'official' `app.py` to
 check for changes to incorporate, then update the version pinned in `pyproject.toml`,
