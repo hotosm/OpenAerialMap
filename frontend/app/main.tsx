@@ -1,3 +1,5 @@
+import '@hotosm/ui/dist/style.css';
+import '@hotosm/ui/dist/components/header/header.js';
 import { allDefined } from '@awesome.me/webawesome/dist/webawesome.js';
 
 import Detail from '$components/detail';
@@ -35,15 +37,32 @@ function AppContent() {
   const [showDetailPane, setShowDetailPane] = useState(false);
   return (
     <StacProvider>
-      <Sidebar
-        isDetailPaneShown={showDetailPane}
-        setShowDetailPane={setShowDetailPane}
-      />
-      <Detail
-        isDetailPaneShown={showDetailPane}
-        setShowDetailPane={setShowDetailPane}
-      />
-      <MapComponent />
+      <hot-header
+        title='OpenAerialMap'
+        logo={`${import.meta.env.BASE_URL}/favicon.svg`}
+        showLogin
+        osm-oauth-client-id='9qmECyRwBNFyqNl9LszwHX1WOxKFKeBsA5ofAS1GJGY'
+        osm-oauth-redirect-uri='https://hotosm.github.io/openaerialmap/'
+      ></hot-header>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          height: `calc(100vh - var(--hot-spacing-4x-large))`
+        }}
+      >
+        <Sidebar
+          isDetailPaneShown={showDetailPane}
+          setShowDetailPane={setShowDetailPane}
+        />
+        <Detail
+          isDetailPaneShown={showDetailPane}
+          setShowDetailPane={setShowDetailPane}
+        />
+        <div style={{ flex: 1, position: 'relative' }}>
+          <MapComponent />
+        </div>
+      </div>
     </StacProvider>
   );
 }
