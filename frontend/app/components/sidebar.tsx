@@ -1,19 +1,43 @@
 import type WaSelect from '@awesome.me/webawesome/dist/components/select/select.js';
 import type { WaSelectionChangeEvent } from '@awesome.me/webawesome/dist/webawesome.js';
 
-import '@awesome.me/webawesome/dist/components/drawer/drawer.js';
-import '@awesome.me/webawesome/dist/components/button/button.js';
-import '@awesome.me/webawesome/dist/components/copy-button/copy-button.js';
-import '@awesome.me/webawesome/dist/components/spinner/spinner.js';
-import '@awesome.me/webawesome/dist/components/icon/icon.js';
-import '@awesome.me/webawesome/dist/components/select/select.js';
-import '@awesome.me/webawesome/dist/components/option/option.js';
-import '@awesome.me/webawesome/dist/components/dialog/dialog.js';
-import '@awesome.me/webawesome/dist/components/input/input.js';
+// async function registerWaComponents() {
+//   if (!customElements.get('wa-drawer')) {
+//     await import('@awesome.me/webawesome/dist/components/drawer/drawer.js');
+//   }
+//   if (!customElements.get('wa-icon')) {
+//     await import('@awesome.me/webawesome/dist/components/icon/icon.js');
+//   }
+//   if (!customElements.get('wa-button')) {
+//     await import('@awesome.me/webawesome/dist/components/button/button.js');
+//   }
+//   if (!customElements.get('wa-copy-button')) {
+//     await import(
+//       '@awesome.me/webawesome/dist/components/copy-button/copy-button.js'
+//     );
+//   }
+//   if (!customElements.get('wa-spinner')) {
+//     await import('@awesome.me/webawesome/dist/components/spinner/spinner.js');
+//   }
+//   if (!customElements.get('wa-select')) {
+//     await import('@awesome.me/webawesome/dist/components/select/select.js');
+//   }
+//   if (!customElements.get('wa-option')) {
+//     await import('@awesome.me/webawesome/dist/components/option/option.js');
+//   }
+//   if (!customElements.get('wa-spinner')) {
+//     await import('@awesome.me/webawesome/dist/components/dialog/dialog.js');
+//   }
+//   if (!customElements.get('wa-input')) {
+//     await import('@awesome.me/webawesome/dist/components/input/input.js');
+//   }
+// }
 
 import { useEffect, useState } from 'react';
 import { useStac } from '../context/StacContext';
 import { StacFeatureCollection } from '../types/stac';
+
+// await registerWaComponents();
 
 function CollectionDropdown() {
   const { availableCollections, handleSelectCollection } = useStac();
@@ -357,7 +381,7 @@ export default function Sidebar({
     <div
       style={{
         width: '450px',
-        height: '100vh',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         padding: '1rem',
@@ -372,7 +396,7 @@ export default function Sidebar({
           marginBottom: '1rem'
         }}
       >
-        OpenAerialMap STAC Catalog
+        Providers
       </h2>
 
       {isStacCollectionLoading && <wa-spinner />}

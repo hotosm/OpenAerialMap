@@ -1,6 +1,13 @@
 export {};
 
 declare module 'react' {
+  // hotosm/ui
+  namespace JSX {
+    interface IntrinsicElements {
+      'hot-header': any;
+    }
+  }
+  // WebAwesome
   namespace JSX {
     interface IntrinsicElements {
       'wa-drawer': any;
