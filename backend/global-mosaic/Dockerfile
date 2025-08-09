@@ -7,6 +7,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV UV_MANAGED_PYTHON=false
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
+ENV PYTHONUNBUFFERED=1
 
 # Install dependencies for,
 # * Git sources
@@ -53,4 +54,4 @@ COPY gen_mosaic.py /app/gen_mosaic.py
 
 ENV PATH=/app/.venv/bin:$PATH
 
-CMD ["python", "gen_mosaic.py"]
+CMD ["python", "-u", "gen_mosaic.py"]

@@ -12,7 +12,6 @@ services:
     depends_on:
       db-restore:
         condition: service_completed_successfully
-    command: python gen_mosaic.py
 
   db-restore:
     container_name: pgstac-db-restore

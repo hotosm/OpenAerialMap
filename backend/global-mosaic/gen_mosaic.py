@@ -77,43 +77,65 @@ def get_features() -> list[dict]:
     return features
 
 
-def get_band_count_lazy(url: str) -> int | None:
+def validate_cog_bands(url: str) -> tuple[bool, int]:
     """
-    Get band count for a COG URL, checking cache first.
-
-    Returns None if COG failed to open or is not RGB.
+    Validate COG structure and return (is_valid, band_count).
+    
+    Returns:
+        (True, band_count) if COG is valid RGB or RGBA imagery
+        (False, 0) if COG is invalid or not RGB/RGBA (e.g., single-band DEM)
     """
     if url in failure_cache:
-        return None
+        return False, 0
 
     if url in band_count_cache:
-        return band_count_cache[url]
+        count = band_count_cache[url]
+        # Accept both RGB (3-band) and RGBA (4-band) imagery
+        return count in (3, 4), count
 
     try:
         with COGReader(url) as cog:
             count = cog.dataset.count
             band_count_cache[url] = count
-            return count if count == 3 else None  # Only return RGB COGs
-    except Exception:
+            
+            # Validate it's 3-band RGB or 4-band RGBA
+            if count not in (3, 4):
+                return False, count
+                
+            return True, count
+                
+    except Exception as e:
+        print(f"Failed to open COG {url}: {e}")
         failure_cache.add(url)
-        return None
+        return False, 0
+
+
+def get_band_count_lazy(url: str) -> int | None:
+    """
+    Get band count for a COG URL, checking cache first.
+
+    Returns None if COG failed to open or is not RGB/RGBA imagery.
+    """
+    is_valid, count = validate_cog_bands(url)
+    return count if is_valid else None
 
 
 def filter_rgb_features_for_tile(
     feature_indices: list[int], features: list[dict]
 ) -> list[str]:
     """
-    Filter features to only RGB COGs for a specific tile.
+    Filter features to only valid RGB/RGBA COGs for a specific tile.
     Only checks band counts for COGs that intersect this tile.
     """
-    rgb_urls = []
+    imagery_urls = []
     for idx in feature_indices:
         url = features[idx]["url"]
-        if get_band_count_lazy(url) == 3:
-            rgb_urls.append(url)
-            if len(rgb_urls) >= MAX_COGS_PER_TILE:
+        is_valid, _ = validate_cog_bands(url)
+        if is_valid:
+            imagery_urls.append(url)
+            if len(imagery_urls) >= MAX_COGS_PER_TILE:
                 break
-    return rgb_urls
+    return imagery_urls
 
 
 def group_tiles_by_zoom(
@@ -169,35 +191,70 @@ def get_tile_list(features: list[dict]) -> list[mercantile.Tile]:
 
 
 def cog_reader(url: str, x: int, y: int, z: int):
-    """Read COGs that are RGBA."""
+    """Read COGs that are valid RGB or RGBA."""
     if url in failure_cache:
-        return None
-
-    if url in band_count_cache and band_count_cache[url] != 3:
         return None
 
     try:
         with COGReader(url) as cog:
+            # Validate band count
             if url not in band_count_cache:
                 band_count_cache[url] = cog.dataset.count
-                if cog.dataset.count != 3:
-                    return None
+                
+            band_count = band_count_cache[url]
+            if band_count not in (3, 4):
+                return None
 
-            # Read RGB bands and get the mask
-            tile_data = cog.tile(x, y, z, indexes=(1, 2, 3))
+            # Read all available bands
+            if band_count == 3:
+                # RGB - read bands 1,2,3
+                tile_data = cog.tile(x, y, z, indexes=(1, 2, 3))
+            else:
+                # RGBA - read bands 1,2,3,4
+                tile_data = cog.tile(x, y, z, indexes=(1, 2, 3, 4))
+            
+            # Validate data structure before proceeding
+            if tile_data.data.ndim != 3 or tile_data.data.shape[0] != band_count:
+                print(f"Invalid tile data structure for {url}: shape {tile_data.data.shape}")
+                failure_cache.add(url)
+                return None
+                
+            # Validate mask structure
+            if tile_data.mask.ndim < 2:
+                print(f"Invalid mask structure for {url}: mask shape {tile_data.mask.shape}")
+                failure_cache.add(url)
+                return None
 
-            # Create alpha channel from the mask
-            # The mask is True where data is valid, False where it should be transparent
-            alpha = (tile_data.mask[0] == False).astype(np.uint8) * 255
+            # Handle different mask structures
+            if tile_data.mask.ndim == 3:
+                # Multi-band mask - use first band
+                mask_band = tile_data.mask[0]
+            elif tile_data.mask.ndim == 2:
+                # Single mask for all bands
+                mask_band = tile_data.mask
+            else:
+                print(f"Unexpected mask dimensions for {url}: {tile_data.mask.ndim}")
+                failure_cache.add(url)
+                return None
 
-            # Stack RGB + Alpha to create RGBA
-            rgba_data = np.concatenate(
-                [
-                    tile_data.data,  # RGB bands
-                    alpha[np.newaxis, :, :],  # Alpha band
-                ],
-                axis=0,
-            )
+            if band_count == 3:
+                # RGB: Create alpha channel from the mask
+                # The mask is True where data is invalid, False where it should be opaque
+                alpha = (~mask_band).astype(np.uint8) * 255
+
+                # Stack RGB + Alpha to create RGBA
+                rgba_data = np.concatenate(
+                    [
+                        tile_data.data,  # RGB bands
+                        alpha[np.newaxis, :, :],  # Alpha band
+                    ],
+                    axis=0,
+                )
+            else:
+                # RGBA: Use existing alpha channel, but still respect mask
+                rgba_data = tile_data.data.copy()
+                # Apply mask to alpha channel - zero out alpha where mask indicates invalid data
+                rgba_data[3, mask_band] = 0
 
             # Return ImageData-like object with RGBA data
             return ImageData(
@@ -263,6 +320,50 @@ def make_coverage_tile_for_geom(
     return render(arr.transpose(2, 0, 1), img_format="PNG")
 
 
+def safe_mosaic_reader(urls: list[str], reader_func):
+    """
+    Wrapper around mosaic_reader that filters out None results.
+    
+    Args:
+        urls: List of COG URLs to mosaic
+        reader_func: Function that reads individual COGs
+        
+    Returns:
+        (ImageData, list) tuple or raises exception if no valid imagery
+    """
+    def filtered_reader(url):
+        result = reader_func(url)
+        return result  # mosaic_reader will handle None values
+    
+    # Filter URLs to only those that might work
+    valid_urls = [url for url in urls if url not in failure_cache]
+    
+    if not valid_urls:
+        raise ValueError("No valid COGs available for mosaicking")
+    
+    try:
+        return mosaic_reader(valid_urls, filtered_reader)
+    except Exception as e:
+        # If mosaic fails, try each COG individually to identify the problem
+        print(f"Mosaic failed with {len(valid_urls)} COGs: {e}")
+        
+        working_urls = []
+        for url in valid_urls:
+            try:
+                result = filtered_reader(url)
+                if result is not None:
+                    working_urls.append(url)
+            except Exception as individual_e:
+                print(f"Individual COG failed {url}: {individual_e}")
+                failure_cache.add(url)
+        
+        if working_urls:
+            print(f"Retrying mosaic with {len(working_urls)} working COGs")
+            return mosaic_reader(working_urls, filtered_reader)
+        else:
+            raise ValueError("No working COGs found for mosaicking")
+
+
 def process_tile(
     tile: mercantile.Tile, features: list[dict], tree: STRtree
 ) -> tuple[int, bytes]:
@@ -307,8 +408,15 @@ def process_tile(
         )
 
     try:
-        # Attempt to mosaic the RGB COGs
-        image, _ = mosaic_reader(tile_cogs, lambda url: cog_reader(url, x, y, z))
+        # Attempt to mosaic the RGB COGs with improved error handling
+        image, _ = safe_mosaic_reader(tile_cogs, lambda url: cog_reader(url, x, y, z))
+
+        # Validate the resulting image before rendering
+        if image is None or image.data is None:
+            raise ValueError("Mosaic returned None or invalid image data")
+            
+        if image.data.ndim != 3:
+            raise ValueError(f"Invalid mosaic data dimensions: {image.data.shape}")
 
         return zxy_to_tileid(z, x, y), render(
             image.data,
@@ -324,6 +432,40 @@ def process_tile(
         return zxy_to_tileid(z, x, y), make_coverage_tile_for_geom(
             mercantile.bounds(tile), covered_geoms
         )
+
+
+def pre_validate_cogs(features: list[dict]) -> list[dict]:
+    """
+    Pre-validate all COGs to filter out problematic ones early.
+
+    FIXME generate this in the STAC metadata once, instead of having
+    to do this for every COG...
+    
+    Args:
+        features: List of feature dictionaries
+        
+    Returns:
+        Filtered list of features with only valid RGB COGs
+    """
+    print("Pre-validating COG bands...")
+    valid_features = []
+    
+    for i, feature in enumerate(features):
+        if i % 100 == 0:
+            print(f"Validated {i}/{len(features)} COGs...")
+
+        url = feature["url"]
+        is_valid, band_count = validate_cog_bands(url)
+        
+        if is_valid:
+            valid_features.append(feature)
+        else:
+            print(f"Filtered out COG {url}: {band_count} band(s) or invalid structure")
+    
+    print(f"Pre-validation complete: {len(valid_features)}/{len(features)} COGs are valid RGB")
+    print(f"Filtered out {len(features) - len(valid_features)} invalid COGs")
+
+    return valid_features
 
 
 def render_pmtiles_optimized(
@@ -382,7 +524,7 @@ def render_pmtiles_optimized(
                     if processed_tiles % 500 == 0:
                         print(
                             f"Processed {processed_tiles}/{total_tiles} tiles "
-                            f"({processed_tiles / total_tiles * 100:.1f}%)"
+                            f"({processed_tiles / total_tiles * 100:.1f}%)",
                         )
 
         writer.finalize(header, metadata)
@@ -395,8 +537,8 @@ def render_pmtiles_optimized(
 def estimate_processing_time(tiles: list[mercantile.Tile]) -> None:
     """Provide user with estimated processing time based on tile count."""
     # Rough estimates based on zoom level complexity
-    coverage_tiles = sum(1 for t in tiles if t.z <= 5)
-    mosaic_tiles = sum(1 for t in tiles if t.z > 5)
+    coverage_tiles = sum(1 for t in tiles if t.z <= 10)
+    mosaic_tiles = sum(1 for t in tiles if t.z > 10)
 
     # Rough time estimates (seconds per tile)
     coverage_time = coverage_tiles * 0.1  # Coverage tiles are fast
@@ -424,8 +566,14 @@ def main():
         print("No imagery found. Exiting.")
         return
 
+    # Pre-validate COGs to filter out problematic ones
+    valid_features = pre_validate_cogs(features)
+    if not valid_features:
+        print("No valid RGB COGs found. Exiting.")
+        return
+
     print("Calculating tiles to render...")
-    tiles = get_tile_list(features)
+    tiles = get_tile_list(valid_features)
     print(f"Total tiles to render: {len(tiles)}")
 
     # Provide time estimate
@@ -433,7 +581,7 @@ def main():
 
     # Start processing
     start = time.time()
-    render_pmtiles_optimized(features, tiles)
+    render_pmtiles_optimized(valid_features, tiles)
 
     elapsed = time.time() - start
     print(f"PMTiles archive written: {OUTPUT_PM}")
@@ -445,7 +593,10 @@ def main():
     print(f"  - COGs with cached band counts: {len(band_count_cache)}")
     print(f"  - Failed COGs: {len(failure_cache)}")
     print(
-        f"  - Cache hit rate: {len(band_count_cache) / (len(band_count_cache) + len(failure_cache)) * 100:.1f}%"
+        f"  - Cache hit rate: {len(band_count_cache) / (len(band_count_cache) + len(failure_cache)) * 100:.1f}% "
+        f"(if both caches have entries)"
+        if (len(band_count_cache) + len(failure_cache)) > 0
+        else "  - No COGs processed"
     )
 
 
