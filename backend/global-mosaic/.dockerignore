@@ -1,0 +1,2 @@
+# don't copy host uv .venv
+.venv
