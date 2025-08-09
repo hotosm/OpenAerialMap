@@ -27,7 +27,4 @@ PGURL=<output_from_plus_with_localhost>
 
 # Dump the db
 pg_dump "$PGURL" > pgstac-backup.sql
-
-# Copy to host filesystem
-docker cp aws-cli:/root/pgstac-backup.sql ./pgstac-backup.sql
 ```
