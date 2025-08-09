@@ -1,0 +1,68 @@
+services:
+  mosaicker:
+    image: ghcr.io/hotosm/openaerialmap/global-mosaicker
+    container_name: mosaic-generator
+    build: .
+    volumes:
+      - ./gen_mosaic.py:/app/gen_mosaic.py
+      - ./output:/app/output
+    environment:
+      TEST_MODE: True
+      PG_DSN: postgres://eoapi:eoapi@db/eoapi
+    depends_on:
+      db-restore:
+        condition: service_completed_successfully
+    command: python gen_mosaic.py
+
+  db-restore:
+    container_name: pgstac-db-restore
+    image: "ghcr.io/stac-utils/pgstac:v0.9.6"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+      - ./pgstac-backup.dump:/pgstac-backup.dump
+    entrypoint: /bin/sh -c
+    command:
+      - |
+        PGPASSWORD=eoapi pg_restore \
+          --clean \
+          --create \
+          --no-owner \
+          --no-privileges \
+          -d postgres \
+          -h db \
+          -U eoapi \
+          /pgstac-backup.dump
+
+        // Ensure success exit code
+        exit 0
+
+  db:
+    container_name: pgstac-db
+    image: "ghcr.io/stac-utils/pgstac:v0.9.6"
+    environment:
+      - POSTGRES_USER=eoapi
+      - POSTGRES_PASSWORD=eoapi
+      - POSTGRES_DB=eoapi
+      - PGUSER=eoapi
+      - PGPASSWORD=eoapi
+      - PGDATABASE=eoapi
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+    ports:
+      - "5439:5432"
+    healthcheck:
+      test: pg_isready --user eoapi -d postgres
+      start_period: 5s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  default:
+    name: global-mosaic
+
+volumes:
+  db_data:
