@@ -7,7 +7,7 @@ services:
       - ./gen_mosaic.py:/app/gen_mosaic.py
       - ./output:/app/output
     environment:
-      TEST_MODE: True
+      TEST_MODE: 1
       PG_DSN: postgres://eoapi:eoapi@db/eoapi
     depends_on:
       db-restore:

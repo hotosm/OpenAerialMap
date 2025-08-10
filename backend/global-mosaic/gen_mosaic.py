@@ -1,310 +1,169 @@
-"""Generate global mosaic tiles using TiTiler.
+#!/usr/bin/env python3
+"""
+Generate a PMTiles archive at /app/output/global_mosaic.pmtiles by:
+ 1. Querying PgSTAC for imagery footprints within a bbox
+ 2. Generating grey coverage tiles (z 0-10) by rasterizing footprints into the tile
+ 3. Downloading real tiles for z 11-14 from TiTiler and inserting into PMTiles
+ - Skipping z > 14 (these are served upstream by TiTiler directly)
 
-We use different approaches at different zoom levels:
-- Zooms 0-10 --> Pre-generated "coverage mask".
-    NOTE we do this because seeing a blob of high res imagery on
-    a tiny zoom level 0 tile is pretty useless.
-- Zooms 11-14 --> Mosaicked imagery from high-res COGs.
-- Zooms 14-22 --> The actual TMS from TiTiler.
-
-NOTE it would probably be best to use cogeo-mosaic with mosaicJSON
-NOTE so consider updating this script.
+Configuration (env):
+ - PG_DSN: Postgres DSN for PgSTAC (e.g. postgresql://user:pass@host:port/db)
+ - COLLECTION: collection name in pgstac.items (default: "openaerialmap")
+ - TILE_URL_TEMPLATE: tile URL template with {z},{x},{y},{collection} e.g.
+     https://.../raster/collections/{collection}/tiles/WebMercatorQuad/
+     {z}/{x}/{y}.png?assets=visual&bidx=1&bidx=2&bidx=3
+ - THREADS: number of concurrent HTTP workers (default 16)
+ - HTTP_TIMEOUT: request timeout seconds (default 30)
+ - RETRIES: per-tile retries (default 2)
+ - TEST_MODE: if set => uses small BBOX; otherwise global BBOX
+ - LOG_LEVEL: the log level to use, from "DEBUG" or "INFO"
 """
 
-import os
-import time
+import asyncio
 import json
-from concurrent.futures import ThreadPoolExecutor
+import logging
+import os
+import sys
+import time
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
 
+import aiohttp
 import mercantile
-import affine
 import numpy as np
+import affine
 from psycopg import connect
 from shapely.geometry import shape, box
 from shapely.strtree import STRtree
 from rasterio import features
-from rio_tiler.mosaic import mosaic_reader
-from rio_tiler.io import COGReader
-from rio_tiler.models import ImageData
 from rio_tiler.utils import render
 from pmtiles.writer import write
 from pmtiles.tile import zxy_to_tileid, TileType, Compression
 
 PG_DSN = os.getenv("PG_DSN", "postgresql://user:pass@host:port/pgstac")
-COLLECTION = "openaerialmap"
-ZOOM_MIN, ZOOM_MAX = 0, 13  # Zoom range to mosaic
-OUTPUT_PM = "/app/output/global_mosaic.pmtiles"
-TILE_SIZE = 256
-MAX_COGS_PER_TILE = 5  # Limit number of COGs mosaicked per tile
-THREADS = int(os.getenv("THREADS", 8))
+COLLECTION = os.getenv("COLLECTION", "openaerialmap")
+# NOTE here we specify the bands to select manually to avoid errors
+# NOTE RGB = param `bidx=1&bidx=2&bidx=3`
+TILE_URL_TEMPLATE = os.getenv(
+    "TILE_URL_TEMPLATE",
+    "https://oam-eoapi-prod.imagery-services.k8s-prod.hotosm.org/raster/collections"
+    "/{collection}/tiles/WebMercatorQuad/{z}/{x}/{y}.png?assets=visual&bidx=1&bidx=2&bidx=3",
+)
+THREADS = int(os.getenv("THREADS", "16"))
+HTTP_TIMEOUT = int(os.getenv("HTTP_TIMEOUT", "30"))
+RETRIES = int(os.getenv("RETRIES", "2"))
 
 TEST_MODE = bool(os.getenv("TEST_MODE", False))
-BBOX = (-14.00, 4.00, -8.00, 10.00) if TEST_MODE else (-180, -90, 180, 90)
+BBOX: tuple[float, float, float, float] = (
+    (-14.0, 4.0, -8.0, 10.0)
+    if TEST_MODE
+    else (-180.0, -85.05112878, 180.0, 85.05112878)
+)
 
-band_count_cache: dict[str, int] = {}
-failure_cache: set[str] = set()  # Tracks COGs that failed to open
-cog_readers_cache: dict[str, COGReader] = {}  # Cache opened COG readers
+OUTPUT_PM = "/app/output/global_mosaic.pmtiles"
+TILE_SIZE = 256
+
+ZOOM_MIN = 0
+ZOOM_MAX = 14  # we produce coverage 0-10, tiles 11-14, skip >14
+
+logging.basicConfig(
+    stream=sys.stdout,
+    level=os.getenv("LOG_LEVEL", "INFO"),
+    format="%(asctime)s %(levelname)s: %(message)s",
+)
+log = logging.getLogger("gen_mosaic")
+
+
+@dataclass
+class TileJob:
+    z: int
+    x: int
+    y: int
 
 
 def get_features() -> list[dict]:
-    """Query PgSTAC for imagery features in BBOX."""
+    """
+    Query PgSTAC for imagery features in BBOX (synchronous).
+    Returns list of dicts: {"geometry": shapely.geometry, "url": <asset url or None>, "id": <id>}
+    """
     where_bbox = ""
     params = [COLLECTION]
-    if TEST_MODE:
-        where_bbox = "AND geometry && ST_MakeEnvelope(%s, %s, %s, %s, 4326)"
-        params.extend(BBOX)
+    where_bbox = "AND geometry && ST_MakeEnvelope(%s, %s, %s, %s, 4326)"
+    params.extend(BBOX)
 
     query = f"""
-    SELECT id::text AS id,
-        content->'assets'->'visual'->>'href' AS url,
-        ST_AsGeoJSON(geometry) AS geom
-    FROM pgstac.items
-    WHERE collection = %s
-    {where_bbox}
-    ORDER BY (content->>'datetime')::timestamptz DESC
+        SELECT id::text AS id,
+            content->'assets'->'visual'->>'href' AS url,
+            ST_AsGeoJSON(geometry) AS geom
+        FROM pgstac.items
+        WHERE collection = %s
+        {where_bbox}
+        ORDER BY (content->>'datetime')::timestamptz DESC;
     """
 
+    log.info(f"Querying PgSTAC for features (bbox={BBOX})...")
+    features = []
     with connect(PG_DSN) as conn, conn.cursor() as cur:
         cur.execute(query, params)
         rows = cur.fetchall()
 
-    features = [
-        {"geometry": shape(json.loads(geom)), "url": url, "id": id_}
-        for id_, url, geom in rows
-        if url
-    ]
-    print(f"Found {len(features)} items in pgSTAC for given BBOX")
+    for id_, url, geom in rows:
+        if geom is None:
+            continue
+        try:
+            geom_json = json.loads(geom)
+            features.append({"geometry": shape(geom_json), "url": url, "id": id_})
+        except Exception as e:
+            log.warning(f"Failed to parse geometry for {id_}: {e}")
+
+    log.debug(f"Query: {query}")
+    log.info(f"Found {len(features)} items in pgSTAC for bbox")
     return features
-
-
-def validate_cog_bands(url: str) -> tuple[bool, int]:
-    """
-    Validate COG structure and return (is_valid, band_count).
-    
-    Returns:
-        (True, band_count) if COG is valid RGB or RGBA imagery
-        (False, 0) if COG is invalid or not RGB/RGBA (e.g., single-band DEM)
-    """
-    if url in failure_cache:
-        return False, 0
-
-    if url in band_count_cache:
-        count = band_count_cache[url]
-        # Accept both RGB (3-band) and RGBA (4-band) imagery
-        return count in (3, 4), count
-
-    try:
-        with COGReader(url) as cog:
-            count = cog.dataset.count
-            band_count_cache[url] = count
-            
-            # Validate it's 3-band RGB or 4-band RGBA
-            if count not in (3, 4):
-                return False, count
-                
-            return True, count
-                
-    except Exception as e:
-        print(f"Failed to open COG {url}: {e}")
-        failure_cache.add(url)
-        return False, 0
-
-
-def get_band_count_lazy(url: str) -> int | None:
-    """
-    Get band count for a COG URL, checking cache first.
-
-    Returns None if COG failed to open or is not RGB/RGBA imagery.
-    """
-    is_valid, count = validate_cog_bands(url)
-    return count if is_valid else None
-
-
-def filter_rgb_features_for_tile(
-    feature_indices: list[int], features: list[dict]
-) -> list[str]:
-    """
-    Filter features to only valid RGB/RGBA COGs for a specific tile.
-    Only checks band counts for COGs that intersect this tile.
-    """
-    imagery_urls = []
-    for idx in feature_indices:
-        url = features[idx]["url"]
-        is_valid, _ = validate_cog_bands(url)
-        if is_valid:
-            imagery_urls.append(url)
-            if len(imagery_urls) >= MAX_COGS_PER_TILE:
-                break
-    return imagery_urls
-
-
-def group_tiles_by_zoom(
-    tiles: list[mercantile.Tile],
-) -> dict[int, list[mercantile.Tile]]:
-    """Group tiles by zoom level for more efficient processing."""
-    tiles_by_zoom = {}
-    for tile in tiles:
-        if tile.z not in tiles_by_zoom:
-            tiles_by_zoom[tile.z] = []
-        tiles_by_zoom[tile.z].append(tile)
-    return tiles_by_zoom
 
 
 def get_tile_list(features: list[dict]) -> list[mercantile.Tile]:
     """
-    Generate a list of Web Mercator tiles that cover all provided imagery features.
-
-    This function:
-    1. Extracts geometries from the input features.
-    2. Builds a spatial index (STRtree) for fast intersection queries.
-    3. Iterates through zoom levels from `ZOOM_MIN` to `ZOOM_MAX`.
-    4. For each tile in the BBOX at that zoom, checks if the tile bounds intersect
-       with any imagery geometry.
-    5. Returns a flat list of all tiles that intersect at least one feature.
-
-    Args:
-        features: List of dicts containing:
-            - geometry (shapely geometry): footprint of the imagery.
-            - url (str): link to the COG imagery file.
-            - id (str): unique identifier for the feature.
-
-    Returns:
-        List of mercantile.Tile objects representing the tiles to render.
+    Build spatial index of feature footprints and return list of tiles intersecting them
+    for zooms ZOOM_MIN..ZOOM_MAX.
     """
     geoms = [f["geometry"] for f in features]
     tree = STRtree(geoms)
 
     tiles: list[mercantile.Tile] = []
-
     for z in range(ZOOM_MIN, ZOOM_MAX + 1):
         zoom_tiles = []
+        # iterate only within bbox (default is global)
         for tile in mercantile.tiles(*BBOX, [z]):
             tile_geom = box(*mercantile.bounds(tile))
             intersect_indices = tree.query(tile_geom)
-            if len(intersect_indices) > 0:  # At least one feature intersects
+            if len(intersect_indices) > 0:
                 zoom_tiles.append(tile)
-
-        print(f"Zoom {z}: {len(zoom_tiles)} tiles")
+        log.info("Zoom %d: %d tiles", z, len(zoom_tiles))
         tiles.extend(zoom_tiles)
-
     return tiles
-
-
-def cog_reader(url: str, x: int, y: int, z: int):
-    """Read COGs that are valid RGB or RGBA."""
-    if url in failure_cache:
-        return None
-
-    try:
-        with COGReader(url) as cog:
-            # Validate band count
-            if url not in band_count_cache:
-                band_count_cache[url] = cog.dataset.count
-                
-            band_count = band_count_cache[url]
-            if band_count not in (3, 4):
-                return None
-
-            # Read all available bands
-            if band_count == 3:
-                # RGB - read bands 1,2,3
-                tile_data = cog.tile(x, y, z, indexes=(1, 2, 3))
-            else:
-                # RGBA - read bands 1,2,3,4
-                tile_data = cog.tile(x, y, z, indexes=(1, 2, 3, 4))
-            
-            # Validate data structure before proceeding
-            if tile_data.data.ndim != 3 or tile_data.data.shape[0] != band_count:
-                print(f"Invalid tile data structure for {url}: shape {tile_data.data.shape}")
-                failure_cache.add(url)
-                return None
-                
-            # Validate mask structure
-            if tile_data.mask.ndim < 2:
-                print(f"Invalid mask structure for {url}: mask shape {tile_data.mask.shape}")
-                failure_cache.add(url)
-                return None
-
-            # Handle different mask structures
-            if tile_data.mask.ndim == 3:
-                # Multi-band mask - use first band
-                mask_band = tile_data.mask[0]
-            elif tile_data.mask.ndim == 2:
-                # Single mask for all bands
-                mask_band = tile_data.mask
-            else:
-                print(f"Unexpected mask dimensions for {url}: {tile_data.mask.ndim}")
-                failure_cache.add(url)
-                return None
-
-            if band_count == 3:
-                # RGB: Create alpha channel from the mask
-                # The mask is True where data is invalid, False where it should be opaque
-                alpha = (~mask_band).astype(np.uint8) * 255
-
-                # Stack RGB + Alpha to create RGBA
-                rgba_data = np.concatenate(
-                    [
-                        tile_data.data,  # RGB bands
-                        alpha[np.newaxis, :, :],  # Alpha band
-                    ],
-                    axis=0,
-                )
-            else:
-                # RGBA: Use existing alpha channel, but still respect mask
-                rgba_data = tile_data.data.copy()
-                # Apply mask to alpha channel - zero out alpha where mask indicates invalid data
-                rgba_data[3, mask_band] = 0
-
-            # Return ImageData-like object with RGBA data
-            return ImageData(
-                data=rgba_data,
-                mask=tile_data.mask,
-                assets=[url],
-                crs=tile_data.crs,
-                bounds=tile_data.bounds,
-            )
-
-    except Exception as e:
-        failure_cache.add(url)
-        print(f"Failed to read COG {url}: {e}")
-        return None
 
 
 def make_coverage_tile_for_geom(
     tile_bounds: tuple[float, float, float, float],
     geoms: list,
-    color: tuple[int, int, int, int] = (128, 128, 128, 128),
+    color: tuple[int, int, int, int] = (128, 128, 128, 102),  # 102/255 ≈ 40% opacity
 ) -> bytes:
     """
-    Create a PNG tile with grey translucent coverage where imagery exists,
-    transparent elsewhere.
-
-    Args:
-        tile_bounds: (west, south, east, north) bounds of the tile
-        geoms: List of shapely geometries to rasterize
-        color: RGBA color tuple for coverage areas
-
-    Returns:
-        PNG bytes for the coverage tile
+    Create a PNG tile (256x256) with translucent coverage where imagery exists,
+    transparent elsewhere. Returns PNG bytes.
     """
-    # Early return for empty geometry list
+    # Early return for empty geometry list -> fully transparent tile
     if not geoms:
-        # Return fully transparent tile
         arr = np.zeros((TILE_SIZE, TILE_SIZE, 4), dtype=np.uint8)
         return render(arr.transpose(2, 0, 1), img_format="PNG")
 
-    # Tile size and transform
+    # build transform from tile bounds to pixel grid
+    west, south, east, north = tile_bounds
     transform = affine.Affine(
-        (tile_bounds[2] - tile_bounds[0]) / TILE_SIZE,
-        0,
-        tile_bounds[0],
-        0,
-        (tile_bounds[1] - tile_bounds[3]) / TILE_SIZE,
-        tile_bounds[3],
+        (east - west) / TILE_SIZE, 0, west, 0, (south - north) / TILE_SIZE, north
     )
 
-    # Rasterize geometry mask (1 where covered, 0 elsewhere)
+    # rasterize geometries to mask
     mask = features.rasterize(
         [(geom, 1) for geom in geoms],
         out_shape=(TILE_SIZE, TILE_SIZE),
@@ -314,291 +173,235 @@ def make_coverage_tile_for_geom(
         dtype="uint8",
     )
 
-    # Create RGBA array with coverage color where mask is 1
+    # build RGBA array: color where mask==1, else transparent
     arr = np.zeros((TILE_SIZE, TILE_SIZE, 4), dtype=np.uint8)
-    arr[mask == 1, :4] = color
+    # assign RGBA to masked pixels
+    r, g, b, a = color
+    arr[mask == 1, 0] = r
+    arr[mask == 1, 1] = g
+    arr[mask == 1, 2] = b
+    arr[mask == 1, 3] = a
+
     return render(arr.transpose(2, 0, 1), img_format="PNG")
 
 
-def safe_mosaic_reader(urls: list[str], reader_func):
+async def fetch_tile_bytes(
+    session: aiohttp.ClientSession, url: str, timeout: int, retries: int
+) -> Optional[bytes]:
     """
-    Wrapper around mosaic_reader that filters out None results.
-    
-    Args:
-        urls: List of COG URLs to mosaic
-        reader_func: Function that reads individual COGs
-        
-    Returns:
-        (ImageData, list) tuple or raises exception if no valid imagery
+    Fetch single tile as bytes. Return None for missing (404) or non-200.
+    Retries transient network/server errors.
     """
-    def filtered_reader(url):
-        result = reader_func(url)
-        return result  # mosaic_reader will handle None values
-    
-    # Filter URLs to only those that might work
-    valid_urls = [url for url in urls if url not in failure_cache]
-    
-    if not valid_urls:
-        raise ValueError("No valid COGs available for mosaicking")
-    
-    try:
-        return mosaic_reader(valid_urls, filtered_reader)
-    except Exception as e:
-        # If mosaic fails, try each COG individually to identify the problem
-        print(f"Mosaic failed with {len(valid_urls)} COGs: {e}")
-        
-        working_urls = []
-        for url in valid_urls:
-            try:
-                result = filtered_reader(url)
-                if result is not None:
-                    working_urls.append(url)
-            except Exception as individual_e:
-                print(f"Individual COG failed {url}: {individual_e}")
-                failure_cache.add(url)
-        
-        if working_urls:
-            print(f"Retrying mosaic with {len(working_urls)} working COGs")
-            return mosaic_reader(working_urls, filtered_reader)
-        else:
-            raise ValueError("No working COGs found for mosaicking")
+    attempt = 0
+    while attempt <= retries:
+        try:
+            async with session.get(url, timeout=timeout) as resp:
+                if resp.status == 200:
+                    return await resp.read()
+                if resp.status == 404:
+                    log.debug("Tile not found (404): %s", url)
+                    return None
+                if 500 <= resp.status < 600:
+                    log.warning(
+                        "Server error %s for %s (attempt %d/%d)",
+                        resp.status,
+                        url,
+                        attempt + 1,
+                        retries,
+                    )
+                else:
+                    log.warning("Unexpected status %s for %s", resp.status, url)
+                    return None
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            log.warning(
+                "Error fetching %s: %s (attempt %d/%d)", url, e, attempt + 1, retries
+            )
+
+        attempt += 1
+        await asyncio.sleep(0.5 * attempt)
+
+    log.error("Failed to fetch %s after %d attempts", url, retries)
+    return None
 
 
-def process_tile(
-    tile: mercantile.Tile, features: list[dict], tree: STRtree
-) -> tuple[int, bytes]:
+def generate_mosaic() -> None:
     """
-    Process global tile, reading COG if there is a hit.
-
-    Args:
-        tile: Mercantile tile to process
-        features: List of all imagery features
-        tree: Spatial index of feature geometries
-
-    Returns:
-        Tuple of (tileid, PNG bytes) for the rendered tile
+    Main entrypoint (synchronous). Queries PG, builds tile list, and writes PMTiles.
+    Uses an asyncio loop internally to download 11-14 tiles concurrently.
     """
-    x, y, z = tile.x, tile.y, tile.z
+    # 1) get footprint of all items from database, within bbox
+    features = get_features()
+    if not features:
+        log.warning("No features found - nothing to do.")
+        return
 
-    tile_geom = box(*mercantile.bounds(tile))
-    candidate_indices = tree.query(tile_geom)
+    # spatial index for lookups and tile selection
+    geoms = [f["geometry"] for f in features]
+    tree = STRtree(geoms)
 
-    if len(candidate_indices) == 0:
-        # No coverage at all - return transparent tile
-        return zxy_to_tileid(z, x, y), make_coverage_tile_for_geom(
-            mercantile.bounds(tile), []
-        )
+    # 2) get all mercator tiles that overlap the feature geoms
+    tiles = get_tile_list(features)
+    if not tiles:
+        log.info("No tiles to render for bbox")
+        return
 
-    # For low zoom levels (0-10), just show coverage mask
-    if z <= 10:
-        covered_geoms = [tree.geometries[i] for i in candidate_indices]
-        return zxy_to_tileid(z, x, y), make_coverage_tile_for_geom(
-            mercantile.bounds(tile), covered_geoms
-        )
+    # group tiles by zoom for processing order
+    tiles_by_zoom = {}
+    for t in tiles:
+        tiles_by_zoom.setdefault(t.z, []).append(t)
 
-    # For higher zoom levels (11+), try to mosaic actual imagery
-    # Only check band counts for COGs that intersect this specific tile
-    tile_cogs = filter_rgb_features_for_tile(candidate_indices, features)
+    total_tiles = len(tiles)
+    log.info("Total tiles to render (z 0-14): %d", total_tiles)
 
-    if not tile_cogs:
-        # No valid RGB imagery --> fallback to coverage tile
-        covered_geoms = [tree.geometries[i] for i in candidate_indices]
-        return zxy_to_tileid(z, x, y), make_coverage_tile_for_geom(
-            mercantile.bounds(tile), covered_geoms
-        )
-
-    try:
-        # Attempt to mosaic the RGB COGs with improved error handling
-        image, _ = safe_mosaic_reader(tile_cogs, lambda url: cog_reader(url, x, y, z))
-
-        # Validate the resulting image before rendering
-        if image is None or image.data is None:
-            raise ValueError("Mosaic returned None or invalid image data")
-            
-        if image.data.ndim != 3:
-            raise ValueError(f"Invalid mosaic data dimensions: {image.data.shape}")
-
-        return zxy_to_tileid(z, x, y), render(
-            image.data,
-            img_format="PNG",
-            # Force RGBA output to preserve transparency
-            colormap=None,
-        )
-
-    except Exception as e:
-        print(f"Mosaic failed for tile {z}/{x}/{y}: {e}")
-        # Fallback to coverage tile
-        covered_geoms = [tree.geometries[i] for i in candidate_indices]
-        return zxy_to_tileid(z, x, y), make_coverage_tile_for_geom(
-            mercantile.bounds(tile), covered_geoms
-        )
-
-
-def pre_validate_cogs(features: list[dict]) -> list[dict]:
-    """
-    Pre-validate all COGs to filter out problematic ones early.
-
-    FIXME generate this in the STAC metadata once, instead of having
-    to do this for every COG...
-    
-    Args:
-        features: List of feature dictionaries
-        
-    Returns:
-        Filtered list of features with only valid RGB COGs
-    """
-    print("Pre-validating COG bands...")
-    valid_features = []
-    
-    for i, feature in enumerate(features):
-        if i % 100 == 0:
-            print(f"Validated {i}/{len(features)} COGs...")
-
-        url = feature["url"]
-        is_valid, band_count = validate_cog_bands(url)
-        
-        if is_valid:
-            valid_features.append(feature)
-        else:
-            print(f"Filtered out COG {url}: {band_count} band(s) or invalid structure")
-    
-    print(f"Pre-validation complete: {len(valid_features)}/{len(features)} COGs are valid RGB")
-    print(f"Filtered out {len(features) - len(valid_features)} invalid COGs")
-
-    return valid_features
-
-
-def render_pmtiles_optimized(
-    features: list[dict], tiles: list[mercantile.Tile]
-) -> None:
-    """
-    Render tiles to PMTiles archive.
-
-    Processes tiles in zoom-level order to take advantage of spatial locality
-    and optimize caching behavior.
-    """
+    # 3) prepare pmtiles writer
+    header = {
+        "version": 3,
+        "tile_type": TileType.PNG,
+        "tile_compression": Compression.NONE,
+    }
     metadata = {
         "name": COLLECTION,
         "bounds": list(BBOX),
         "minzoom": ZOOM_MIN,
         "maxzoom": ZOOM_MAX,
-        "description": f"Global mosaic from {COLLECTION}",
-    }
-    header = {
-        "version": 3,
-        "tile_type": TileType.PNG,
-        "tile_compression": Compression.NONE,  # Prioritize speed over size
+        "description": f"Global mosaic (coverage z0-10; tiles z11-14) from {COLLECTION}",
     }
 
-    geoms = [f["geometry"] for f in features]
-    tree = STRtree(geoms)
-
-    # Group tiles by zoom level for better processing order
-    tiles_by_zoom = group_tiles_by_zoom(tiles)
-
-    total_tiles = len(tiles)
-    processed_tiles = 0
-
+    start_time = time.time()
     with write(OUTPUT_PM) as writer:
-        # Process tiles zoom by zoom for better cache locality
-        for zoom in sorted(tiles_by_zoom.keys()):
-            zoom_tiles = tiles_by_zoom[zoom]
-            print(f"Processing zoom {zoom}: {len(zoom_tiles)} tiles")
+        processed = 0
+        written = 0
+        skipped = 0
 
-            with ThreadPoolExecutor(max_workers=THREADS) as executor:
-                # Process tiles in batches to avoid overwhelming memory
-                batch_size = min(100, len(zoom_tiles))
-                for i in range(0, len(zoom_tiles), batch_size):
-                    batch = zoom_tiles[i : i + batch_size]
-
-                    # Process batch
-                    results = list(
-                        executor.map(lambda t: process_tile(t, features, tree), batch)
+        # Part A: handle zooms 0-10, simply generate grey coverage tiles
+        for z in sorted(k for k in tiles_by_zoom.keys() if k <= 10):
+            zs = tiles_by_zoom[z]
+            log.info("Processing coverage zoom %d: %d tiles", z, len(zs))
+            for tile in zs:
+                tile_geom = box(*mercantile.bounds(tile))
+                candidate_idx = tree.query(tile_geom)
+                if len(candidate_idx) == 0:
+                    # fully transparent
+                    data = make_coverage_tile_for_geom(mercantile.bounds(tile), [])
+                else:
+                    covered_geoms = [tree.geometries[i] for i in candidate_idx]
+                    data = make_coverage_tile_for_geom(
+                        mercantile.bounds(tile), covered_geoms
+                    )
+                writer.write_tile(zxy_to_tileid(tile.z, tile.x, tile.y), data)
+                written += 1
+                processed += 1
+                if processed % 500 == 0:
+                    log.info(
+                        "Processed %d/%d (written=%d skipped=%d)",
+                        processed,
+                        total_tiles,
+                        written,
+                        skipped,
                     )
 
-                    # Write results
-                    for tileid, data in results:
-                        writer.write_tile(tileid, data)
-                        processed_tiles += 1
+        # Part B: handle zooms 1-14, getting the mosaiced tiles from TiTiler
+        download_tiles_list: List[mercantile.Tile] = []
+        for z in sorted(k for k in tiles_by_zoom.keys() if 11 <= k <= 14):
+            download_tiles_list.extend(tiles_by_zoom[z])
 
-                    if processed_tiles % 500 == 0:
-                        print(
-                            f"Processed {processed_tiles}/{total_tiles} tiles "
-                            f"({processed_tiles / total_tiles * 100:.1f}%)",
+        if download_tiles_list:
+            log.info(
+                "Downloading %d tiles for zooms 11-14 using %d workers",
+                len(download_tiles_list),
+                THREADS,
+            )
+
+            # create an event loop and queue to bridge async fetch -> sync write
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            queue: asyncio.Queue[Tuple[Optional[int], Optional[bytes]]] = (
+                asyncio.Queue()
+            )
+
+            async def producer():
+                connector = aiohttp.TCPConnector(limit_per_host=THREADS)
+                timeout = aiohttp.ClientTimeout(total=HTTP_TIMEOUT)
+                sem = asyncio.Semaphore(THREADS)
+                async with aiohttp.ClientSession(
+                    connector=connector, timeout=timeout
+                ) as session:
+
+                    async def fetch_and_enqueue(tile: mercantile.Tile):
+                        url = TILE_URL_TEMPLATE.format(
+                            collection=COLLECTION, z=tile.z, x=tile.x, y=tile.y
                         )
+                        async with sem:
+                            data = await fetch_tile_bytes(
+                                session, url, HTTP_TIMEOUT, RETRIES
+                            )
+                            tid = zxy_to_tileid(tile.z, tile.x, tile.y)
+                            await queue.put(
+                                (tid, data, tile)
+                            )  # include tile for fallback
 
+                    tasks = [
+                        asyncio.create_task(fetch_and_enqueue(t))
+                        for t in download_tiles_list
+                    ]
+                    # wait for all to complete
+                    await asyncio.gather(*tasks)
+                # signal completion
+                await queue.put((None, None, None))
+
+            # start producer
+            producer_task = loop.create_task(producer())
+
+            try:
+                # consume queue synchronously but by advancing event loop to get items
+                while True:
+                    item = loop.run_until_complete(queue.get())
+                    tid, data, tile = item
+                    if tid is None and data is None and tile is None:
+                        break
+                    if data:
+                        writer.write_tile(tid, data)
+                        written += 1
+                    else:
+                        # fallback: coverage tile for that tile area
+                        tile_geom = box(*mercantile.bounds(tile))
+                        candidate_idx = tree.query(tile_geom)
+                        if len(candidate_idx) == 0:
+                            fallback = make_coverage_tile_for_geom(
+                                mercantile.bounds(tile), []
+                            )
+                        else:
+                            covered_geoms = [tree.geometries[i] for i in candidate_idx]
+                            fallback = make_coverage_tile_for_geom(
+                                mercantile.bounds(tile), covered_geoms
+                            )
+                        writer.write_tile(tid, fallback)
+                        written += 1
+                    processed += 1
+                    if processed % 500 == 0:
+                        log.info(
+                            "Processed %d/%d (written=%d skipped=%d)",
+                            processed,
+                            total_tiles,
+                            written,
+                            skipped,
+                        )
+            finally:
+                # make sure producer finishes
+                loop.run_until_complete(producer_task)
+                loop.close()
+
+        # finalize pmtiles
         writer.finalize(header, metadata)
-        print(
-            f"Cache stats: {len(band_count_cache)} COGs checked, "
-            f"{len(failure_cache)} failed"
-        )
 
-
-def estimate_processing_time(tiles: list[mercantile.Tile]) -> None:
-    """Provide user with estimated processing time based on tile count."""
-    # Rough estimates based on zoom level complexity
-    coverage_tiles = sum(1 for t in tiles if t.z <= 10)
-    mosaic_tiles = sum(1 for t in tiles if t.z > 10)
-
-    # Rough time estimates (seconds per tile)
-    coverage_time = coverage_tiles * 0.1  # Coverage tiles are fast
-    mosaic_time = mosaic_tiles * 2.0  # Mosaic tiles are slower
-
-    total_estimate = coverage_time + mosaic_time
-
-    print("Processing estimate:")
-    print(
-        f"  - Coverage tiles (zoom 0-10): {coverage_tiles} tiles (~{coverage_time:.1f}s)"
-    )
-    print(f"  - Mosaic tiles (zoom 11+): {mosaic_tiles} tiles (~{mosaic_time:.1f}s)")
-    print(f"  - Total estimated time: {total_estimate / 60:.1f} minutes")
-
-
-def main():
-    """Generate the global mosaic."""
-    print(f"Starting global mosaic generation for {BBOX}")
-    print(f"Target zoom range: {ZOOM_MIN}-{ZOOM_MAX}")
-    print(f"Using {THREADS} threads")
-
-    # Load features from database
-    features = get_features()
-    if not features:
-        print("No imagery found. Exiting.")
-        return
-
-    # Pre-validate COGs to filter out problematic ones
-    valid_features = pre_validate_cogs(features)
-    if not valid_features:
-        print("No valid RGB COGs found. Exiting.")
-        return
-
-    print("Calculating tiles to render...")
-    tiles = get_tile_list(valid_features)
-    print(f"Total tiles to render: {len(tiles)}")
-
-    # Provide time estimate
-    estimate_processing_time(tiles)
-
-    # Start processing
-    start = time.time()
-    render_pmtiles_optimized(valid_features, tiles)
-
-    elapsed = time.time() - start
-    print(f"PMTiles archive written: {OUTPUT_PM}")
-    print(f"Total processing time: {elapsed:.2f} seconds ({elapsed / 60:.1f} minutes)")
-    print(f"Average time per tile: {elapsed / len(tiles):.3f} seconds")
-
-    # Final cache statistics
-    print("Final stats:")
-    print(f"  - COGs with cached band counts: {len(band_count_cache)}")
-    print(f"  - Failed COGs: {len(failure_cache)}")
-    print(
-        f"  - Cache hit rate: {len(band_count_cache) / (len(band_count_cache) + len(failure_cache)) * 100:.1f}% "
-        f"(if both caches have entries)"
-        if (len(band_count_cache) + len(failure_cache)) > 0
-        else "  - No COGs processed"
-    )
+    elapsed = time.time() - start_time
+    log.info("PMTiles archive written: %s", OUTPUT_PM)
+    log.info("Total processing time: %.1f s (%.1f min)", elapsed, elapsed / 60.0)
+    log.info("Tiles processed: %d (written=%d skipped=%d)", processed, written, skipped)
 
 
 if __name__ == "__main__":
-    main()
+    log.info("Starting generation (TEST_MODE=%s)", TEST_MODE)
+    generate_mosaic()
