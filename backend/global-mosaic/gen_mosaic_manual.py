@@ -84,7 +84,7 @@ def get_features() -> list[dict]:
 def validate_cog_bands(url: str) -> tuple[bool, int]:
     """
     Validate COG structure and return (is_valid, band_count).
-    
+
     Returns:
         (True, band_count) if COG is valid RGB or RGBA imagery
         (False, 0) if COG is invalid or not RGB/RGBA (e.g., single-band DEM)
@@ -101,13 +101,13 @@ def validate_cog_bands(url: str) -> tuple[bool, int]:
         with COGReader(url) as cog:
             count = cog.dataset.count
             band_count_cache[url] = count
-            
+
             # Validate it's 3-band RGB or 4-band RGBA
             if count not in (3, 4):
                 return False, count
-                
+
             return True, count
-                
+
     except Exception as e:
         print(f"Failed to open COG {url}: {e}")
         failure_cache.add(url)
@@ -204,7 +204,7 @@ def cog_reader(url: str, x: int, y: int, z: int):
             # Validate band count
             if url not in band_count_cache:
                 band_count_cache[url] = cog.dataset.count
-                
+
             band_count = band_count_cache[url]
             if band_count not in (3, 4):
                 return None
@@ -216,16 +216,20 @@ def cog_reader(url: str, x: int, y: int, z: int):
             else:
                 # RGBA - read bands 1,2,3,4
                 tile_data = cog.tile(x, y, z, indexes=(1, 2, 3, 4))
-            
+
             # Validate data structure before proceeding
             if tile_data.data.ndim != 3 or tile_data.data.shape[0] != band_count:
-                print(f"Invalid tile data structure for {url}: shape {tile_data.data.shape}")
+                print(
+                    f"Invalid tile data structure for {url}: shape {tile_data.data.shape}"
+                )
                 failure_cache.add(url)
                 return None
-                
+
             # Validate mask structure
             if tile_data.mask.ndim < 2:
-                print(f"Invalid mask structure for {url}: mask shape {tile_data.mask.shape}")
+                print(
+                    f"Invalid mask structure for {url}: mask shape {tile_data.mask.shape}"
+                )
                 failure_cache.add(url)
                 return None
 
@@ -327,30 +331,31 @@ def make_coverage_tile_for_geom(
 def safe_mosaic_reader(urls: list[str], reader_func):
     """
     Wrapper around mosaic_reader that filters out None results.
-    
+
     Args:
         urls: List of COG URLs to mosaic
         reader_func: Function that reads individual COGs
-        
+
     Returns:
         (ImageData, list) tuple or raises exception if no valid imagery
     """
+
     def filtered_reader(url):
         result = reader_func(url)
         return result  # mosaic_reader will handle None values
-    
+
     # Filter URLs to only those that might work
     valid_urls = [url for url in urls if url not in failure_cache]
-    
+
     if not valid_urls:
         raise ValueError("No valid COGs available for mosaicking")
-    
+
     try:
         return mosaic_reader(valid_urls, filtered_reader)
     except Exception as e:
         # If mosaic fails, try each COG individually to identify the problem
         print(f"Mosaic failed with {len(valid_urls)} COGs: {e}")
-        
+
         working_urls = []
         for url in valid_urls:
             try:
@@ -360,7 +365,7 @@ def safe_mosaic_reader(urls: list[str], reader_func):
             except Exception as individual_e:
                 print(f"Individual COG failed {url}: {individual_e}")
                 failure_cache.add(url)
-        
+
         if working_urls:
             print(f"Retrying mosaic with {len(working_urls)} working COGs")
             return mosaic_reader(working_urls, filtered_reader)
@@ -418,7 +423,7 @@ def process_tile(
         # Validate the resulting image before rendering
         if image is None or image.data is None:
             raise ValueError("Mosaic returned None or invalid image data")
-            
+
         if image.data.ndim != 3:
             raise ValueError(f"Invalid mosaic data dimensions: {image.data.shape}")
 
@@ -444,29 +449,31 @@ def pre_validate_cogs(features: list[dict]) -> list[dict]:
 
     FIXME generate this in the STAC metadata once, instead of having
     to do this for every COG...
-    
+
     Args:
         features: List of feature dictionaries
-        
+
     Returns:
         Filtered list of features with only valid RGB COGs
     """
     print("Pre-validating COG bands...")
     valid_features = []
-    
+
     for i, feature in enumerate(features):
         if i % 100 == 0:
             print(f"Validated {i}/{len(features)} COGs...")
 
         url = feature["url"]
         is_valid, band_count = validate_cog_bands(url)
-        
+
         if is_valid:
             valid_features.append(feature)
         else:
             print(f"Filtered out COG {url}: {band_count} band(s) or invalid structure")
-    
-    print(f"Pre-validation complete: {len(valid_features)}/{len(features)} COGs are valid RGB")
+
+    print(
+        f"Pre-validation complete: {len(valid_features)}/{len(features)} COGs are valid RGB"
+    )
     print(f"Filtered out {len(features) - len(valid_features)} invalid COGs")
 
     return valid_features
