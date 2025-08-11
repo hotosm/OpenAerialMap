@@ -1,0 +1,18 @@
+name: Build and Deploy Global Mosaicker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/global-mosaic/**"
+  workflow_dispatch:
+
+jobs:
+  image-build-and-push:
+    uses: hotosm/gh-workflows/.github/workflows/image_build.yml@1.5.1
+    with:
+      context: backend/global-mosaic/
+      image_name: ghcr.io/${{ github.repository }}/global-mosaic
+      build_target: prod
+      dockerfile: Dockerfile
