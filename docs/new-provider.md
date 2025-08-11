@@ -17,8 +17,7 @@ See the [stactools-hotosm
 README](https://github.com/hotosm/stactools-hotosm/blob/main/README.md) for
 more.
 
-## Add to ingestion container
+## Add ingestion
 
-TODO, see
-<https://github.com/ceholden/OpenAerialMap/compare/main...ceholden:OpenAerialMap:feat/ingester-custom-stac-api>
-for prototype code for an ingestion process.
+Create a PR on [hotosm/k8s-infra](https://github.com/hotosm/k8s-infra/pulls) to add a new [manifest](https://github.com/hotosm/k8s-infra/tree/main/kubernetes/manifests) that syncs your data on a schedule.
+See [sync-maxar](https://github.com/hotosm/k8s-infra/blob/main/kubernetes/manifests/sync-maxar.yaml) for a representative example.
