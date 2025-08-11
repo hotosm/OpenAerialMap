@@ -19,5 +19,10 @@ more.
 
 ## Add ingestion
 
-Create a PR on [hotosm/k8s-infra](https://github.com/hotosm/k8s-infra/pulls) to add a new [manifest](https://github.com/hotosm/k8s-infra/tree/main/kubernetes/manifests) that syncs your data on a schedule.
-See [sync-maxar](https://github.com/hotosm/k8s-infra/blob/main/kubernetes/manifests/sync-maxar.yaml) for a representative example.
+Create a PR on [hotosm/k8s-infra](https://github.com/hotosm/k8s-infra/pulls)
+to add a new
+[manifest](https://github.com/hotosm/k8s-infra/tree/main/kubernetes/manifests)
+that syncs your data on a schedule.
+See
+[sync-maxar](https://github.com/hotosm/k8s-infra/blob/main/kubernetes/manifests/sync-maxar.yaml)
+for a representative example.
