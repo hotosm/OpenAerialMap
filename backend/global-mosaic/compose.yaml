@@ -9,6 +9,8 @@ services:
     environment:
       TEST_MODE: 1
       PG_DSN: postgres://eoapi:eoapi@db/eoapi
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
     depends_on:
       db-restore:
         condition: service_completed_successfully

@@ -26,7 +26,8 @@ import os
 import sys
 import time
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Optional
+from pathlib import Path
 
 import aiohttp
 import mercantile
@@ -39,6 +40,9 @@ from rasterio import features
 from rio_tiler.utils import render
 from pmtiles.writer import write
 from pmtiles.tile import zxy_to_tileid, TileType, Compression
+from minio import Minio
+from minio.error import S3Error
+
 
 PG_DSN = os.getenv("PG_DSN", "postgresql://user:pass@host:port/pgstac")
 COLLECTION = os.getenv("COLLECTION", "openaerialmap")
@@ -138,7 +142,7 @@ def get_tile_list(features: list[dict]) -> list[mercantile.Tile]:
             intersect_indices = tree.query(tile_geom)
             if len(intersect_indices) > 0:
                 zoom_tiles.append(tile)
-        log.info("Zoom %d: %d tiles", z, len(zoom_tiles))
+        log.info(f"Zoom {z}: {len(zoom_tiles)} tiles")
         tiles.extend(zoom_tiles)
     return tiles
 
@@ -199,30 +203,24 @@ async def fetch_tile_bytes(
                 if resp.status == 200:
                     return await resp.read()
                 if resp.status == 404:
-                    log.debug("Tile not found (404): %s", url)
+                    log.debug(f"Tile not found (404): {url}")
                     return None
                 if 500 <= resp.status < 600:
                     log.warning(
-                        "Server error %s for %s (attempt %d/%d)",
-                        resp.status,
-                        url,
-                        attempt + 1,
-                        retries,
+                        f"Server error {resp.status} for {url} (attempt {attempt + 1}/{retries})"
                     )
                 else:
-                    log.warning("Unexpected status %s for %s", resp.status, url)
+                    log.warning(f"Unexpected status {resp.status} for {url}")
                     return None
         except asyncio.CancelledError:
             raise
         except Exception as e:
-            log.warning(
-                "Error fetching %s: %s (attempt %d/%d)", url, e, attempt + 1, retries
-            )
+            log.warning(f"Error fetching {url}: {e} (attempt {attempt + 1}/{retries})")
 
         attempt += 1
         await asyncio.sleep(0.5 * attempt)
 
-    log.error("Failed to fetch %s after %d attempts", url, retries)
+    log.error(f"Failed to fetch {url} after {retries} attempts")
     return None
 
 
@@ -248,12 +246,12 @@ def generate_mosaic() -> None:
         return
 
     # group tiles by zoom for processing order
-    tiles_by_zoom = {}
+    tiles_by_zoom: dict[int, list[mercantile.Tile]] = {}
     for t in tiles:
         tiles_by_zoom.setdefault(t.z, []).append(t)
 
     total_tiles = len(tiles)
-    log.info("Total tiles to render (z 0-14): %d", total_tiles)
+    log.info(f"Total tiles to render (z 0-14): {total_tiles}")
 
     # 3) prepare pmtiles writer
     header = {
@@ -275,10 +273,10 @@ def generate_mosaic() -> None:
         written = 0
         skipped = 0
 
-        # Part A: handle zooms 0-10, simply generate grey coverage tiles
+        # Part A: coverage tiles (z 0-10, indicating where imagery exists)
         for z in sorted(k for k in tiles_by_zoom.keys() if k <= 10):
             zs = tiles_by_zoom[z]
-            log.info("Processing coverage zoom %d: %d tiles", z, len(zs))
+            log.info(f"Processing coverage zoom {z}: {len(zs)} tiles")
             for tile in zs:
                 tile_geom = box(*mercantile.bounds(tile))
                 candidate_idx = tree.query(tile_geom)
@@ -295,31 +293,24 @@ def generate_mosaic() -> None:
                 processed += 1
                 if processed % 500 == 0:
                     log.info(
-                        "Processed %d/%d (written=%d skipped=%d)",
-                        processed,
-                        total_tiles,
-                        written,
-                        skipped,
+                        f"Processed {processed}/{total_tiles} (written={written} skipped={skipped})"
                     )
 
-        # Part B: handle zooms 1-14, getting the mosaiced tiles from TiTiler
-        download_tiles_list: List[mercantile.Tile] = []
+        # Part B: TiTiler tiles (z 11-14, mosaicked from TiTiler)
+        download_tiles_list: list[mercantile.Tile] = []
         for z in sorted(k for k in tiles_by_zoom.keys() if 11 <= k <= 14):
             download_tiles_list.extend(tiles_by_zoom[z])
 
         if download_tiles_list:
             log.info(
-                "Downloading %d tiles for zooms 11-14 using %d workers",
-                len(download_tiles_list),
-                THREADS,
+                f"Downloading {len(download_tiles_list)} tiles for zooms 11-14 using {THREADS} workers"
             )
 
-            # create an event loop and queue to bridge async fetch -> sync write
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            queue: asyncio.Queue[Tuple[Optional[int], Optional[bytes]]] = (
-                asyncio.Queue()
-            )
+            queue: asyncio.Queue[
+                tuple[Optional[int], Optional[bytes], Optional[mercantile.Tile]]
+            ] = asyncio.Queue()
 
             async def producer():
                 connector = aiohttp.TCPConnector(limit_per_host=THREADS)
@@ -351,14 +342,11 @@ def generate_mosaic() -> None:
                 # signal completion
                 await queue.put((None, None, None))
 
-            # start producer
             producer_task = loop.create_task(producer())
 
             try:
-                # consume queue synchronously but by advancing event loop to get items
                 while True:
-                    item = loop.run_until_complete(queue.get())
-                    tid, data, tile = item
+                    tid, data, tile = loop.run_until_complete(queue.get())
                     if tid is None and data is None and tile is None:
                         break
                     if data:
@@ -382,26 +370,73 @@ def generate_mosaic() -> None:
                     processed += 1
                     if processed % 500 == 0:
                         log.info(
-                            "Processed %d/%d (written=%d skipped=%d)",
-                            processed,
-                            total_tiles,
-                            written,
-                            skipped,
+                            f"Processed {processed}/{total_tiles} (written={written} skipped={skipped})"
                         )
             finally:
-                # make sure producer finishes
                 loop.run_until_complete(producer_task)
                 loop.close()
 
-        # finalize pmtiles
         writer.finalize(header, metadata)
 
     elapsed = time.time() - start_time
-    log.info("PMTiles archive written: %s", OUTPUT_PM)
-    log.info("Total processing time: %.1f s (%.1f min)", elapsed, elapsed / 60.0)
-    log.info("Tiles processed: %d (written=%d skipped=%d)", processed, written, skipped)
+    log.info(f"PMTiles archive written: {OUTPUT_PM}")
+    log.info(f"Total processing time: {elapsed:.1f} s ({elapsed / 60.0:.1f} min)")
+    log.info(f"Tiles processed: {processed} (written={written} skipped={skipped})")
+
+
+def upload_to_s3():
+    endpoint = os.getenv("S3_ENDPOINT", "s3.amazonaws.com")
+    bucket = os.getenv("S3_BUCKET", "oin-hotosm-temp")
+    access_key = os.getenv("S3_ACCESS_KEY")
+    secret_key = os.getenv("S3_SECRET_KEY")
+    region = os.getenv("S3_REGION", "us-east-1")
+    object_key = os.getenv("S3_OBJECT_KEY", "global-mosaic.pmtiles")
+
+    if not all([endpoint, bucket, access_key, secret_key]):
+        log.warning("S3 upload skipped: missing required env vars.")
+        return
+
+    log.debug(f"Initialising Minio client for {endpoint}")
+    client = Minio(
+        endpoint,
+        access_key=access_key,
+        secret_key=secret_key,
+        region=region,
+        secure=True,
+    )
+
+    # NOTE this requires IAM permission ListAllBuckets on the account
+    try:
+        log.info(f"Checking the bucket {bucket} exists")
+        if not client.bucket_exists(bucket):
+            log.exception(f"Bucket {bucket} does not exist. Exiting")
+            return
+    except S3Error as e:
+        log.error(f"Error checking bucket: {e}")
+        return
+
+    log.info(f"Uploading {OUTPUT_PM} to s3://{bucket}/{object_key}")
+    try:
+        client.fput_object(
+            bucket,
+            object_key,
+            OUTPUT_PM,
+            content_type="application/vnd.pmtiles",
+            # Important to ensure the object is public readable
+            metadata={"x-amz-acl": "public-read"},
+        )
+        log.info(f"Upload complete: s3://{bucket}/{object_key}")
+    except S3Error as e:
+        log.error(f"S3 upload failed: {e}")
 
 
 if __name__ == "__main__":
-    log.info("Starting generation (TEST_MODE=%s)", TEST_MODE)
-    generate_mosaic()
+    if Path(OUTPUT_PM).exists():
+        log.info(
+            f"PMTiles archive at {OUTPUT_PM} already exists, skipping straight to upload"
+        )
+    else:
+        log.info(f"Starting PMTiles generation (TEST_MODE={TEST_MODE})")
+        generate_mosaic()
+
+    upload_to_s3()
