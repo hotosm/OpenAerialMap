@@ -28,6 +28,7 @@ import time
 from dataclasses import dataclass
 from typing import Optional
 from pathlib import Path
+from urllib.parse import quote_plus
 
 import aiohttp
 import mercantile
@@ -44,7 +45,20 @@ from minio import Minio
 from minio.error import S3Error
 
 
-PG_DSN = os.getenv("PG_DSN", "postgresql://user:pass@host:port/pgstac")
+PG_DSN = os.getenv("PG_DSN")
+if not PG_DSN:
+    PGHOST = os.getenv("PGHOST")
+    PGUSER = os.getenv("PGUSER")
+    PGPASSWORD = os.getenv("PGPASSWORD")
+    PGPORT = int(os.getenv("PGPORT", 5432))
+    PGDATABASE = os.getenv("PGDATABASE", "eoapi")
+
+    if not (PGHOST and PGUSER and PGPASSWORD):
+        raise ValueError("Must set either PG_DSN, or (PGHOST,PGUSER,PGPASSWORD)")
+
+    # URL encode to avoid issues with special chars
+    PG_DSN = f"postgresql://{quote_plus(PGUSER)}:{quote_plus(PGPASSWORD)}@{PGHOST}:{PGPORT}/{PGDATABASE}"
+
 COLLECTION = os.getenv("COLLECTION", "openaerialmap")
 # NOTE here we specify the bands to select manually to avoid errors
 # NOTE RGB = param `bidx=1&bidx=2&bidx=3`
