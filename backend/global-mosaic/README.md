@@ -2,10 +2,9 @@
 
 On a 24hr schedule:
 
-- Generates global mosaic tiles at zoom levels 1-9 from TiTiler.
-- Save and package as PMTiles.
-- Make the PMTiles accessible via S3.
-- Serve TMS via lightweight Martin server, for clients that don't support PMTiles.
+- Generates global mosaic in PMTiles format, serving via S3.
+- Also server TMS via a lightweight Martin server, for clients that
+  don't support PMTiles.
 
 ## Getting Started
 
@@ -17,6 +16,28 @@ Once `uv` is installed, you can install the dependencies by,
 ```bash
 uv sync --all-groups
 ```
+
+## Note On Various Scripts
+
+The following scripts share a lot of code, and were developed iteratively:
+
+- `gen_mosaic_manual.py` - first attempt, manually generate mosaics from COGs.
+- `gen_mosaic_hybrid.py` - second attempt, hybrid coverage for zooms 0-10 + mosaic
+  for zooms 11-14 (from TiTiler instance).
+- `gen_mosaic.py` - simple grey coverage pixels indicating where we
+  have imagery.
+
+> [!NOTE]
+> For coverage tiles there are two approaches:
+>
+> 1. Colour all pixels in the tile grey, meaning we massively reduce the
+>    PMTiles size, due to internal tile deduplication.
+> 2. Partially colour pixels where appropriate, giving a more accurate
+>    representation of coverage (more space, but looks nicer).
+>    The gen_mosaic.py script currently does approach 2.
+
+As of 2025-08-12 we are simply using `gen_mosaic.py` as the
+simplest approach.
 
 ## Note On S3 Permissions
 

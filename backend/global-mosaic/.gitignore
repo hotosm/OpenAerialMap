@@ -211,6 +211,8 @@ __marimo__/
 
 # Tile output
 output/global_mosaic.pmtiles
+output/global_mosaic_error.log
+output/global_coverage.pmtiles
 
 # pgstac dump
 **/**/*.dump

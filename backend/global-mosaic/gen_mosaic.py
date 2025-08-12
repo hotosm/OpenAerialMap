@@ -1,49 +1,55 @@
 #!/usr/bin/env python3
 """
-Generate a PMTiles archive at /app/output/global_mosaic.pmtiles by:
- 1. Querying PgSTAC for imagery footprints within a bbox
- 2. Generating grey coverage tiles (z 0-10) by rasterizing footprints into the tile
- 3. Downloading real tiles for z 11-14 from TiTiler and inserting into PMTiles
- - Skipping z > 14 (these are served upstream by TiTiler directly)
+Generate a PMTiles archive containing *partial-coverage* translucent grey tiles
+for zooms ZOOM_MIN-ZOOM_MAX by rasterizing PgSTAC footprints into each tile.
 
-Configuration (env):
- - PG_DSN: Postgres DSN for PgSTAC (e.g. postgresql://user:pass@host:port/db)
- - COLLECTION: collection name in pgstac.items (default: "openaerialmap")
- - TILE_URL_TEMPLATE: tile URL template with {z},{x},{y},{collection} e.g.
-     https://.../raster/collections/{collection}/tiles/WebMercatorQuad/
-     {z}/{x}/{y}.png?assets=visual&bidx=1&bidx=2&bidx=3
- - THREADS: number of concurrent HTTP workers (default 16)
- - HTTP_TIMEOUT: request timeout seconds (default 30)
- - RETRIES: per-tile retries (default 2)
- - TEST_MODE: if set => uses small BBOX; otherwise global BBOX
- - LOG_LEVEL: the log level to use, from "DEBUG" or "INFO"
+Workflow:
+ - Queries pgstac.items for a collection inside a bbox (or global by default)
+ - Builds a spatial index (STRtree) of footprints
+ - Iterates tiles per-zoom and rasterizes overlapping footprints into a 256x256 tile
+ - Writes only tiles that have any coverage (non-empty mask) into PMTiles
+    - Parallel tile rasterization per zoom level
+    - Batch PMTiles writes for efficiency
+ - PMTiles deduplicates identical tiles internally (so identical grey tiles will
+   be stored only once)
+ - Uploads the resulting PMTiles to S3
+
+Config (env):
+ - PG_DSN or PGHOST/PGUSER/PGPASSWORD/PGPORT/PGDATABASE for pgstac
+ - COLLECTION (default: openaerialmap) from eoAPI STAC
+ - TILE_SIZE (default: 256)
+ - ZOOM_MIN (default: 0)
+ - ZOOM_MAX (default: 15)
+ - OUTPUT_PM (default: /app/output/global_coverage.pmtiles)
+ - S3_ACCESS_KEY, S3_SECRET_KEY, (optional S3_ENDPOINT, S3_BUCKET, S3_REGION)
+ - TEST_MODE (if set uses small test bbox)
+ - LOG_LEVEL (DEBUG/INFO)
 """
 
-import asyncio
 import json
 import logging
 import os
 import sys
 import time
 from dataclasses import dataclass
-from typing import Optional
 from pathlib import Path
-from urllib.parse import quote_plus
+from typing import Optional, List, Tuple
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from multiprocessing import cpu_count
 
-import aiohttp
-import mercantile
 import numpy as np
 import affine
+import mercantile
 from psycopg import connect
-from shapely.geometry import shape, box
+from shapely.geometry import shape, box, Polygon
 from shapely.strtree import STRtree
+from shapely.ops import unary_union
 from rasterio import features
 from rio_tiler.utils import render
 from pmtiles.writer import write
 from pmtiles.tile import zxy_to_tileid, TileType, Compression
 from minio import Minio
 from minio.error import S3Error
-
 
 PG_DSN = os.getenv("PG_DSN")
 if not PG_DSN:
@@ -56,33 +62,21 @@ if not PG_DSN:
     if not (PGHOST and PGUSER and PGPASSWORD):
         raise ValueError("Must set either PG_DSN, or (PGHOST,PGUSER,PGPASSWORD)")
 
-    # URL encode to avoid issues with special chars
-    PG_DSN = f"postgresql://{quote_plus(PGUSER)}:{quote_plus(PGPASSWORD)}@{PGHOST}:{PGPORT}/{PGDATABASE}"
+    PG_DSN = f"postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
 
 COLLECTION = os.getenv("COLLECTION", "openaerialmap")
-# NOTE here we specify the bands to select manually to avoid errors
-# NOTE RGB = param `bidx=1&bidx=2&bidx=3`
-TILE_URL_TEMPLATE = os.getenv(
-    "TILE_URL_TEMPLATE",
-    "https://oam-eoapi-prod.imagery-services.k8s-prod.hotosm.org/raster/collections"
-    "/{collection}/tiles/WebMercatorQuad/{z}/{x}/{y}.png?assets=visual&bidx=1&bidx=2&bidx=3",
-)
-THREADS = int(os.getenv("THREADS", "16"))
-HTTP_TIMEOUT = int(os.getenv("HTTP_TIMEOUT", "30"))
-RETRIES = int(os.getenv("RETRIES", "2"))
+OUTPUT_PM = os.getenv("OUTPUT_PM", "/app/output/global_coverage.pmtiles")
+TILE_SIZE = int(os.getenv("TILE_SIZE", "256"))
+ZOOM_MIN = int(os.getenv("ZOOM_MIN", "0"))
+ZOOM_MAX = int(os.getenv("ZOOM_MAX", "15"))
 
 TEST_MODE = bool(os.getenv("TEST_MODE", False))
 BBOX: tuple[float, float, float, float] = (
-    (-14.0, 4.0, -8.0, 10.0)
+    (-20.0, 0.0, 10.0, 30.0)  # large text bbox
+    # (-14.00, 4.00, -8.00, 10.00) # small test bbox
     if TEST_MODE
     else (-180.0, -85.05112878, 180.0, 85.05112878)
 )
-
-OUTPUT_PM = "/app/output/global_mosaic.pmtiles"
-TILE_SIZE = 256
-
-ZOOM_MIN = 0
-ZOOM_MAX = 14  # we produce coverage 0-10, tiles 11-14, skip >14
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -99,20 +93,32 @@ class TileJob:
     y: int
 
 
-def get_features() -> list[dict]:
+# NOTE: this global is intentionally set by the worker initializer to avoid
+# pickling 'geoms' for every single task.
+GEOMS: Optional[List[Polygon]] = None
+
+
+def _init_worker(geoms: List[Polygon]) -> None:
     """
-    Query PgSTAC for imagery features in BBOX (synchronous).
+    Run in worker process at start. Stores the geoms list in a module-level
+    global to avoid re-pickling for each task.
+    """
+    global GEOMS
+    GEOMS = geoms
+
+
+def get_features() -> List[dict]:
+    """
+    Query PgSTAC for imagery features in BBOX.
     Returns list of dicts: {"geometry": shapely.geometry, "url": <asset url or None>, "id": <id>}
     """
-    where_bbox = ""
-    params = [COLLECTION]
     where_bbox = "AND geometry && ST_MakeEnvelope(%s, %s, %s, %s, 4326)"
-    params.extend(BBOX)
+    params = [COLLECTION] + list(BBOX)
 
     query = f"""
         SELECT id::text AS id,
-            content->'assets'->'visual'->>'href' AS url,
-            ST_AsGeoJSON(geometry) AS geom
+               content->'assets'->'visual'->>'href' AS url,
+               ST_AsGeoJSON(geometry) AS geom
         FROM pgstac.items
         WHERE collection = %s
         {where_bbox}
@@ -120,80 +126,63 @@ def get_features() -> list[dict]:
     """
 
     log.info(f"Querying PgSTAC for features (bbox={BBOX})...")
-    features = []
-    with connect(PG_DSN) as conn, conn.cursor() as cur:
-        cur.execute(query, params)
-        rows = cur.fetchall()
+    features_list: List[dict] = []
+    try:
+        with connect(PG_DSN) as conn, conn.cursor() as cur:
+            cur.execute(query, params)
+            rows = cur.fetchall()
+    except Exception as e:
+        log.error(f"PgSTAC query failed: {e}")
+        raise
 
     for id_, url, geom in rows:
         if geom is None:
             continue
         try:
-            geom_json = json.loads(geom)
-            features.append({"geometry": shape(geom_json), "url": url, "id": id_})
+            geom_obj = shape(json.loads(geom))
+            features_list.append({"geometry": geom_obj, "url": url, "id": id_})
         except Exception as e:
             log.warning(f"Failed to parse geometry for {id_}: {e}")
 
-    log.debug(f"Query: {query}")
-    log.info(f"Found {len(features)} items in pgSTAC for bbox")
-    return features
+    log.info(f"Found {len(features_list)} items in pgSTAC for bbox")
+    return features_list
 
 
-def get_tile_list(features: list[dict]) -> list[mercantile.Tile]:
-    """
-    Build spatial index of feature footprints and return list of tiles intersecting them
-    for zooms ZOOM_MIN..ZOOM_MAX.
-    """
-    geoms = [f["geometry"] for f in features]
-    tree = STRtree(geoms)
-
-    tiles: list[mercantile.Tile] = []
-    for z in range(ZOOM_MIN, ZOOM_MAX + 1):
-        zoom_tiles = []
-        # iterate only within bbox (default is global)
-        for tile in mercantile.tiles(*BBOX, [z]):
-            tile_geom = box(*mercantile.bounds(tile))
-            intersect_indices = tree.query(tile_geom)
-            if len(intersect_indices) > 0:
-                zoom_tiles.append(tile)
-        log.info(f"Zoom {z}: {len(zoom_tiles)} tiles")
-        tiles.extend(zoom_tiles)
-    return tiles
-
-
-def make_coverage_tile_for_geom(
+def make_partial_coverage_tile(
     tile_bounds: tuple[float, float, float, float],
-    geoms: list,
-    color: tuple[int, int, int, int] = (128, 128, 128, 102),  # 102/255 ≈ 40% opacity
-) -> bytes:
+    geoms: list[Polygon],
+    color: tuple[int, int, int, int] = (128, 128, 128, 102),
+    tile_size: int = 256,
+) -> Optional[bytes]:
     """
-    Create a PNG tile (256x256) with translucent coverage where imagery exists,
-    transparent elsewhere. Returns PNG bytes.
+    Create a PNG tile (tile_size x tile_size) with translucent coverage where imagery exists,
+    transparent elsewhere. Returns PNG bytes, or None if no coverage.
     """
-    # Early return for empty geometry list -> fully transparent tile
     if not geoms:
-        arr = np.zeros((TILE_SIZE, TILE_SIZE, 4), dtype=np.uint8)
-        return render(arr.transpose(2, 0, 1), img_format="PNG")
+        return None
 
-    # build transform from tile bounds to pixel grid
     west, south, east, north = tile_bounds
     transform = affine.Affine(
-        (east - west) / TILE_SIZE, 0, west, 0, (south - north) / TILE_SIZE, north
+        (east - west) / tile_size, 0, west, 0, (south - north) / tile_size, north
     )
 
-    # rasterize geometries to mask
-    mask = features.rasterize(
-        [(geom, 1) for geom in geoms],
-        out_shape=(TILE_SIZE, TILE_SIZE),
-        transform=transform,
-        fill=0,
-        all_touched=True,
-        dtype="uint8",
-    )
+    try:
+        mask = features.rasterize(
+            [(geom, 1) for geom in geoms],
+            out_shape=(tile_size, tile_size),
+            transform=transform,
+            fill=0,
+            all_touched=True,
+            dtype="uint8",
+        )
+    except Exception as e:
+        log.error(f"Rasterization failed for bounds={tile_bounds}: {e}")
+        return None
 
-    # build RGBA array: color where mask==1, else transparent
-    arr = np.zeros((TILE_SIZE, TILE_SIZE, 4), dtype=np.uint8)
-    # assign RGBA to masked pixels
+    if not np.any(mask):
+        return None
+
+    arr = np.zeros((tile_size, tile_size, 4), dtype=np.uint8)
     r, g, b, a = color
     arr[mask == 1, 0] = r
     arr[mask == 1, 1] = g
@@ -203,214 +192,173 @@ def make_coverage_tile_for_geom(
     return render(arr.transpose(2, 0, 1), img_format="PNG")
 
 
-async def fetch_tile_bytes(
-    session: aiohttp.ClientSession, url: str, timeout: int, retries: int
-) -> Optional[bytes]:
+def process_tile(
+    z: int, tile: mercantile.Tile, candidate_indices: list[int], tile_size: int
+) -> Optional[tuple[int, bytes]]:
     """
-    Fetch single tile as bytes. Return None for missing (404) or non-200.
-    Retries transient network/server errors.
+    Process a single tile: clip + simplify + rasterize.
+    Note: this runs in worker processes. It uses global GEOMS which is set via initializer.
     """
-    attempt = 0
-    while attempt <= retries:
-        try:
-            async with session.get(url, timeout=timeout) as resp:
-                if resp.status == 200:
-                    return await resp.read()
-                if resp.status == 404:
-                    log.debug(f"Tile not found (404): {url}")
-                    return None
-                if 500 <= resp.status < 600:
-                    log.warning(
-                        f"Server error {resp.status} for {url} (attempt {attempt + 1}/{retries})"
-                    )
-                else:
-                    log.warning(f"Unexpected status {resp.status} for {url}")
-                    return None
-        except asyncio.CancelledError:
-            raise
-        except Exception as e:
-            log.warning(f"Error fetching {url}: {e} (attempt {attempt + 1}/{retries})")
+    global GEOMS
 
-        attempt += 1
-        await asyncio.sleep(0.5 * attempt)
+    tile_bounds = mercantile.bounds(tile)
+    tile_geom = box(*tile_bounds)
 
-    log.error(f"Failed to fetch {url} after {retries} attempts")
+    pixel_size = (tile_bounds[2] - tile_bounds[0]) / tile_size
+    clipped_simplified = []
+
+    # Iterate only candidate indices passed from main process (do not re-query STRtree)
+    for idx in candidate_indices:
+        geom = GEOMS[idx]
+        if geom.intersects(tile_geom):
+            clipped = geom.intersection(tile_geom)
+            if not clipped.is_empty:
+                clipped_simplified.append(
+                    clipped.simplify(pixel_size, preserve_topology=True)
+                )
+
+    if not clipped_simplified:
+        return None
+
+    data = make_partial_coverage_tile(
+        tile_bounds, clipped_simplified, tile_size=tile_size
+    )
+    if data:
+        return (zxy_to_tileid(tile.z, tile.x, tile.y), data)
     return None
 
 
-def generate_mosaic() -> None:
-    """
-    Main entrypoint (synchronous). Queries PG, builds tile list, and writes PMTiles.
-    Uses an asyncio loop internally to download 11-14 tiles concurrently.
-    """
-    # 1) get footprint of all items from database, within bbox
+def generate_partial_coverage_pmtiles() -> None:
     features = get_features()
     if not features:
         log.warning("No features found - nothing to do.")
         return
 
-    # spatial index for lookups and tile selection
     geoms = [f["geometry"] for f in features]
     tree = STRtree(geoms)
 
-    # 2) get all mercator tiles that overlap the feature geoms
-    tiles = get_tile_list(features)
-    if not tiles:
-        log.info("No tiles to render for bbox")
-        return
+    overall_bounds = unary_union(geoms).bounds
+    log.info(f"Overall feature bounds: {overall_bounds}")
 
-    # group tiles by zoom for processing order
-    tiles_by_zoom: dict[int, list[mercantile.Tile]] = {}
-    for t in tiles:
-        tiles_by_zoom.setdefault(t.z, []).append(t)
-
-    total_tiles = len(tiles)
-    log.info(f"Total tiles to render (z 0-14): {total_tiles}")
-
-    # 3) prepare pmtiles writer
     header = {
         "version": 3,
         "tile_type": TileType.PNG,
         "tile_compression": Compression.NONE,
     }
     metadata = {
-        "name": COLLECTION,
-        "bounds": list(BBOX),
+        "name": f"{COLLECTION}-coverage",
+        "bounds": list(overall_bounds),
         "minzoom": ZOOM_MIN,
         "maxzoom": ZOOM_MAX,
-        "description": f"Global mosaic (coverage z0-10; tiles z11-14) from {COLLECTION}",
+        "description": f"OpenAerialMap global coverage tiles (z{ZOOM_MIN}-{ZOOM_MAX}) for {COLLECTION}",
     }
 
+    Path(OUTPUT_PM).parent.mkdir(parents=True, exist_ok=True)
     start_time = time.time()
+    total_written = 0
+
     with write(OUTPUT_PM) as writer:
-        processed = 0
-        written = 0
-        skipped = 0
+        for z in range(ZOOM_MIN, ZOOM_MAX + 1):
+            tiles = list(mercantile.tiles(*overall_bounds, [z]))
+            total_tiles = len(tiles)
+            log.info(f"Processing zoom {z}: {total_tiles} candidate tiles")
 
-        # Part A: coverage tiles (z 0-10, indicating where imagery exists)
-        for z in sorted(k for k in tiles_by_zoom.keys() if k <= 10):
-            zs = tiles_by_zoom[z]
-            log.info(f"Processing coverage zoom {z}: {len(zs)} tiles")
-            for tile in zs:
+            # Find tiles that have any geometry candidate in tree
+            tasks: List[Tuple[mercantile.Tile, List[int]]] = []
+            for tile in tiles:
                 tile_geom = box(*mercantile.bounds(tile))
-                candidate_idx = tree.query(tile_geom)
-                if len(candidate_idx) == 0:
-                    # fully transparent
-                    data = make_coverage_tile_for_geom(mercantile.bounds(tile), [])
-                else:
-                    covered_geoms = [tree.geometries[i] for i in candidate_idx]
-                    data = make_coverage_tile_for_geom(
-                        mercantile.bounds(tile), covered_geoms
-                    )
-                writer.write_tile(zxy_to_tileid(tile.z, tile.x, tile.y), data)
-                written += 1
-                processed += 1
-                if processed % 500 == 0:
-                    log.info(
-                        f"Processed {processed}/{total_tiles} (written={written} skipped={skipped})"
-                    )
+                candidate_indices = tree.query(tile_geom)
+                # Generate if there is a match
+                if len(candidate_indices) > 0:
+                    tasks.append((tile, candidate_indices))
 
-        # Part B: TiTiler tiles (z 11-14, mosaicked from TiTiler)
-        download_tiles_list: list[mercantile.Tile] = []
-        for z in sorted(k for k in tiles_by_zoom.keys() if 11 <= k <= 14):
-            download_tiles_list.extend(tiles_by_zoom[z])
-
-        if download_tiles_list:
+            skipped_tiles = total_tiles - len(tasks)
             log.info(
-                f"Downloading {len(download_tiles_list)} tiles for zooms 11-14 using {THREADS} workers"
+                f"Zoom {z}: {len(tasks)} tiles to process ({100 - (skipped_tiles / total_tiles) * 100:.1f}% coverage)"
             )
 
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            queue: asyncio.Queue[
-                tuple[Optional[int], Optional[bytes], Optional[mercantile.Tile]]
-            ] = asyncio.Queue()
+            if not tasks:
+                continue
 
-            async def producer():
-                connector = aiohttp.TCPConnector(limit_per_host=THREADS)
-                timeout = aiohttp.ClientTimeout(total=HTTP_TIMEOUT)
-                sem = asyncio.Semaphore(THREADS)
-                async with aiohttp.ClientSession(
-                    connector=connector, timeout=timeout
-                ) as session:
+            # Leave one core spare for main thread + IO
+            max_workers = max(1, min(cpu_count() - 1, len(tasks)))
+            log.debug(f"Using {max_workers} worker processes for zoom {z}")
 
-                    async def fetch_and_enqueue(tile: mercantile.Tile):
-                        url = TILE_URL_TEMPLATE.format(
-                            collection=COLLECTION, z=tile.z, x=tile.x, y=tile.y
-                        )
-                        async with sem:
-                            data = await fetch_tile_bytes(
-                                session, url, HTTP_TIMEOUT, RETRIES
-                            )
-                            tid = zxy_to_tileid(tile.z, tile.x, tile.y)
-                            await queue.put(
-                                (tid, data, tile)
-                            )  # include tile for fallback
+            zoom_start_time = time.time()
+            completed_tasks = 0
+            tiles_written_this_zoom = 0
+            last_log_time = zoom_start_time
 
-                    tasks = [
-                        asyncio.create_task(fetch_and_enqueue(t))
-                        for t in download_tiles_list
-                    ]
-                    # wait for all to complete
-                    await asyncio.gather(*tasks)
-                # signal completion
-                await queue.put((None, None, None))
+            with ProcessPoolExecutor(
+                max_workers=max_workers, initializer=_init_worker, initargs=(geoms,)
+            ) as exe:
+                futures = [
+                    exe.submit(process_tile, z, tile, candidate_indices, TILE_SIZE)
+                    for tile, candidate_indices in tasks
+                ]
 
-            producer_task = loop.create_task(producer())
+                for fut in as_completed(futures):
+                    completed_tasks += 1
+                    current_time = time.time()
 
-            try:
-                while True:
-                    tid, data, tile = loop.run_until_complete(queue.get())
-                    if tid is None and data is None and tile is None:
-                        break
-                    if data:
-                        writer.write_tile(tid, data)
-                        written += 1
-                    else:
-                        # fallback: coverage tile for that tile area
-                        tile_geom = box(*mercantile.bounds(tile))
-                        candidate_idx = tree.query(tile_geom)
-                        if len(candidate_idx) == 0:
-                            fallback = make_coverage_tile_for_geom(
-                                mercantile.bounds(tile), []
-                            )
-                        else:
-                            covered_geoms = [tree.geometries[i] for i in candidate_idx]
-                            fallback = make_coverage_tile_for_geom(
-                                mercantile.bounds(tile), covered_geoms
-                            )
-                        writer.write_tile(tid, fallback)
-                        written += 1
-                    processed += 1
-                    if processed % 500 == 0:
+                    try:
+                        result = fut.result()
+                    except Exception as e:
+                        log.exception(f"Tile processing failed (zoom {z}): {e}")
+                        result = None
+
+                    if result:
+                        writer.write_tile(*result)
+                        total_written += 1
+                        tiles_written_this_zoom += 1
+
+                    # Log every 30 seconds or on completion
+                    if (current_time - last_log_time) >= 30 or completed_tasks == len(
+                        tasks
+                    ):
+                        progress_pct = (completed_tasks / len(tasks)) * 100.0
+                        elapsed = current_time - zoom_start_time
+                        rate = completed_tasks / elapsed if elapsed > 0 else 0
+                        eta = (len(tasks) - completed_tasks) / rate if rate > 0 else 0
+
+                        eta_str = f"{eta / 60:.1f}m" if eta > 60 else f"{eta:.1f}s"
+
                         log.info(
-                            f"Processed {processed}/{total_tiles} (written={written} skipped={skipped})"
+                            f"Zoom {z}: {progress_pct:.1f}% | "
+                            f"{completed_tasks}/{len(tasks)} tasks | "
+                            f"{tiles_written_this_zoom} tiles written | "
+                            f"rate {rate:.1f}/sec | "
+                            f"ETA {eta_str}"
                         )
-            finally:
-                loop.run_until_complete(producer_task)
-                loop.close()
+                        last_log_time = current_time
 
-        writer.finalize(header, metadata)
+            zoom_elapsed = time.time() - zoom_start_time
+            log.info(
+                f"Zoom {z} complete: {tiles_written_this_zoom} tiles written in {zoom_elapsed / 60.0:.1f} min"
+            )
 
-    elapsed = time.time() - start_time
+        writer.finalize(header=header, metadata=metadata)
+
+    elapsed_total = time.time() - start_time
     log.info(f"PMTiles archive written: {OUTPUT_PM}")
-    log.info(f"Total processing time: {elapsed:.1f} s ({elapsed / 60.0:.1f} min)")
-    log.info(f"Tiles processed: {processed} (written={written} skipped={skipped})")
+    log.info(f"Total processing time: {elapsed_total / 60.0:.1f} min")
+    log.info(f"Total tiles written: {total_written}")
 
 
-def upload_to_s3():
+def upload_to_s3() -> None:
     endpoint = os.getenv("S3_ENDPOINT", "s3.amazonaws.com")
     bucket = os.getenv("S3_BUCKET", "oin-hotosm-temp")
     access_key = os.getenv("S3_ACCESS_KEY")
     secret_key = os.getenv("S3_SECRET_KEY")
     region = os.getenv("S3_REGION", "us-east-1")
-    object_key = os.getenv("S3_OBJECT_KEY", "global-mosaic.pmtiles")
+    pmtiles_obj_key = Path(OUTPUT_PM).name
 
-    if not all([endpoint, bucket, access_key, secret_key]):
-        log.warning("S3 upload skipped: missing required env vars.")
+    if not (bucket and access_key and secret_key):
+        log.warning(
+            "S3 upload skipped: missing required env vars (S3_BUCKET/S3_ACCESS_KEY/S3_SECRET_KEY)"
+        )
         return
 
-    log.debug(f"Initialising Minio client for {endpoint}")
     client = Minio(
         endpoint,
         access_key=access_key,
@@ -419,7 +367,6 @@ def upload_to_s3():
         secure=True,
     )
 
-    # NOTE this requires IAM permission ListAllBuckets on the account
     try:
         log.info(f"Checking the bucket {bucket} exists")
         if not client.bucket_exists(bucket):
@@ -429,28 +376,25 @@ def upload_to_s3():
         log.error(f"Error checking bucket: {e}")
         return
 
-    log.info(f"Uploading {OUTPUT_PM} to s3://{bucket}/{object_key}")
+    log.info(f"Uploading {OUTPUT_PM} to s3://{bucket}/{pmtiles_obj_key}")
     try:
         client.fput_object(
             bucket,
-            object_key,
+            pmtiles_obj_key,
             OUTPUT_PM,
             content_type="application/vnd.pmtiles",
-            # Important to ensure the object is public readable
             metadata={"x-amz-acl": "public-read"},
         )
-        log.info(f"Upload complete: s3://{bucket}/{object_key}")
+        log.info(f"Upload complete: s3://{bucket}/{pmtiles_obj_key}")
     except S3Error as e:
         log.error(f"S3 upload failed: {e}")
 
 
 if __name__ == "__main__":
     if Path(OUTPUT_PM).exists():
-        log.info(
-            f"PMTiles archive at {OUTPUT_PM} already exists, skipping straight to upload"
-        )
+        log.info(f"PMTiles archive at {OUTPUT_PM} already exists, skipping generation")
     else:
-        log.info(f"Starting PMTiles generation (TEST_MODE={TEST_MODE})")
-        generate_mosaic()
+        log.info(f"Starting global coverage PMTiles generation (TEST_MODE={TEST_MODE})")
+        generate_partial_coverage_pmtiles()
 
     upload_to_s3()
