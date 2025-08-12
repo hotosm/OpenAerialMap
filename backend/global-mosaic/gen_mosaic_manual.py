@@ -37,7 +37,7 @@ from pmtiles.tile import zxy_to_tileid, TileType, Compression
 PG_DSN = os.getenv("PG_DSN", "postgresql://user:pass@host:port/pgstac")
 COLLECTION = "openaerialmap"
 ZOOM_MIN, ZOOM_MAX = 0, 13  # Zoom range to mosaic
-OUTPUT_PM = "/app/output/global_mosaic.pmtiles"
+OUTPUT_PM = "/app/output/global-mosaic.pmtiles"
 TILE_SIZE = 256
 MAX_COGS_PER_TILE = 5  # Limit number of COGs mosaicked per tile
 THREADS = int(os.getenv("THREADS", 8))

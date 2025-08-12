@@ -3,7 +3,7 @@
 FIXME note we don't use this script for now, instead simply creating a
 FIXME coverage map of grey tiles.
 
-Generate a PMTiles archive at /app/output/global_mosaic.pmtiles by:
+Generate a PMTiles archive at /app/output/global-mosaic.pmtiles by:
  1. Querying PgSTAC for imagery footprints within a bbox
  2. Generating grey coverage tiles (z 0-10) by rasterizing footprints into the tile
  3. Downloading real tiles for z 11-14 from TiTiler and inserting into PMTiles
@@ -79,7 +79,7 @@ BBOX: tuple[float, float, float, float] = (
     else (-180.0, -85.05112878, 180.0, 85.05112878)
 )
 
-OUTPUT_PM = os.getenv("OUTPUT_PM", "/app/output/global_mosaic.pmtiles")
+OUTPUT_PM = os.getenv("OUTPUT_PM", "/app/output/global-mosaic.pmtiles")
 ERROR_LOG_FILE = Path(OUTPUT_PM).parent / "global_mosaic_error.log"
 TILE_SIZE = int(os.getenv("TILE_SIZE", "256"))
 

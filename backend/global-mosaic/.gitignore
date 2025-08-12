@@ -210,9 +210,9 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Tile output
-output/global_mosaic.pmtiles
+output/global-mosaic.pmtiles
 output/global_mosaic_error.log
-output/global_coverage.pmtiles
+output/global-coverage.pmtiles
 
 # pgstac dump
 **/**/*.dump

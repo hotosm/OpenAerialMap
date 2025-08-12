@@ -20,7 +20,7 @@ Config (env):
  - TILE_SIZE (default: 256)
  - ZOOM_MIN (default: 0)
  - ZOOM_MAX (default: 15)
- - OUTPUT_PM (default: /app/output/global_coverage.pmtiles)
+ - OUTPUT_PM (default: /app/output/global-coverage.pmtiles)
  - S3_ACCESS_KEY, S3_SECRET_KEY, (optional S3_ENDPOINT, S3_BUCKET, S3_REGION)
  - TEST_MODE (if set uses small test bbox)
  - LOG_LEVEL (DEBUG/INFO)
@@ -65,7 +65,7 @@ if not PG_DSN:
     PG_DSN = f"postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
 
 COLLECTION = os.getenv("COLLECTION", "openaerialmap")
-OUTPUT_PM = os.getenv("OUTPUT_PM", "/app/output/global_coverage.pmtiles")
+OUTPUT_PM = os.getenv("OUTPUT_PM", "/app/output/global-coverage.pmtiles")
 TILE_SIZE = int(os.getenv("TILE_SIZE", "256"))
 ZOOM_MIN = int(os.getenv("ZOOM_MIN", "0"))
 ZOOM_MAX = int(os.getenv("ZOOM_MAX", "15"))
