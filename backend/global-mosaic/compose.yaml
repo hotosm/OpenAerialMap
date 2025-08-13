@@ -4,7 +4,7 @@ services:
     container_name: mosaic-generator
     build: .
     volumes:
-      - ./gen_mosaic.py:/app/gen_mosaic.py
+      - ./gen_coverage_vector.py:/app/gen_coverage_vector.py
       - ./output:/app/output
     environment:
       TEST_MODE: 1

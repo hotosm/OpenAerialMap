@@ -3,6 +3,10 @@
 Generate a PMTiles archive containing *partial-coverage* translucent grey tiles
 for zooms ZOOM_MIN-ZOOM_MAX by rasterizing PgSTAC footprints into each tile.
 
+NOTE we do not use this, as it's too memory inefficient for now.
+NOTE it could be optimised to run batches of tiles, and not load
+NOTE the job list in memory, instead using an iterator and yield.
+
 Workflow:
  - Queries pgstac.items for a collection inside a bbox (or global by default)
  - Builds a spatial index (STRtree) of footprints

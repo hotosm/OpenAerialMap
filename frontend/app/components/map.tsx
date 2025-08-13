@@ -1,6 +1,8 @@
 import { RASTER_API_PATH, useStacItems } from '$hooks/useStacCatalog';
 import { Feature, FeatureCollection, Geometry } from 'geojson';
-import {
+import { Protocol as PMTilesProtocol } from 'pmtiles';
+import { schemeSet3 } from 'd3-scale-chromatic';
+import maplibregl, {
   GeoJSONSource,
   LngLatBounds,
   Map,
@@ -37,8 +39,13 @@ export default function MapComponent({
     filters,
     bbox
   );
+  const fillOpacity = 0.7;
+  const fillHighlightOpacity = 0.4;
 
   useEffect(() => {
+    const protocol = new PMTilesProtocol();
+    maplibregl.addProtocol('pmtiles', protocol.tile);
+
     if (!map.current) {
       map.current = new Map({
         container: containerId,
@@ -50,8 +57,13 @@ export default function MapComponent({
               tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
               tileSize: 256,
               attribution: '© OpenStreetMap contributors'
+            },
+            'global-coverage': {
+              type: 'vector',
+              url: 'pmtiles://https://s3.amazonaws.com/oin-hotosm-temp/global-coverage.pmtiles'
             }
           },
+
           layers: [
             {
               id: 'osm-tiles',
@@ -59,6 +71,25 @@ export default function MapComponent({
               source: 'osm-tiles',
               minzoom: 0,
               maxzoom: 19
+            },
+            {
+              id: 'global-coverage',
+              source: 'global-coverage',
+              'source-layer': 'globalcoverage',
+              minzoom: 0,
+              maxzoom: 15,
+              type: 'fill',
+              paint: {
+                // https://d3js.org/d3-scale-chromatic/categorical
+                'fill-color': schemeSet3[3],
+                'fill-opacity': [
+                  'case',
+                  ['boolean', ['feature-state', 'hover'], false],
+                  fillHighlightOpacity,
+                  fillOpacity
+                ]
+              },
+              filter: ['==', ['geometry-type'], 'Polygon']
             }
           ]
         },
@@ -144,6 +175,9 @@ export default function MapComponent({
         }
       });
     }
+    return () => {
+      maplibregl.removeProtocol('pmtiles');
+    };
   }, [
     features,
     centerCoordinates,
