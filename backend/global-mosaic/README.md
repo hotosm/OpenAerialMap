@@ -21,11 +21,17 @@ uv sync --all-groups
 
 The following scripts share a lot of code, and were developed iteratively:
 
-- `gen_mosaic_manual.py` - first attempt, manually generate mosaics from COGs.
-- `gen_mosaic_hybrid.py` - second attempt, hybrid coverage for zooms 0-10 + mosaic
-  for zooms 11-14 (from TiTiler instance).
-- `gen_mosaic.py` - simple grey coverage pixels indicating where we
-  have imagery.
+- Attempt 1: `gen_mosaic_manual.py` - manually generate mosaics from COGs.
+- Attempt 2: `gen_mosaic_hybrid.py` - hybrid coverage for zooms 0-10 + mosaic
+  for zooms 11-14 (from TiTiler instance). This is similar to the approach from
+  the original <https://github.com/konturio/oam-mosaic-map>, but uses our eoAPI
+  pgstac and TiTiler instead.
+- Attempt 3: `gen_coverage_raster.py` - simple grey coverage pixels indicating
+  where we have imagery.
+- Attempt 4: `gen_coverage_vector.py` - just use Tippecanoe for vector tiles 🤦‍♂️
+  All the approaches above need significant memory optimisation to run on
+  limited system resources / will require a bit more work. This approach
+  is much more efficient and simple.
 
 > [!NOTE]
 > For coverage tiles there are two approaches:
@@ -34,10 +40,11 @@ The following scripts share a lot of code, and were developed iteratively:
 >    PMTiles size, due to internal tile deduplication.
 > 2. Partially colour pixels where appropriate, giving a more accurate
 >    representation of coverage (more space, but looks nicer).
->    The gen_mosaic.py script currently does approach 2.
+>    The gen_mosaic_raster.py script currently does approach 2.
 
-As of 2025-08-12 we are simply using `gen_mosaic.py` as the
-simplest approach.
+As of 2025-08-12 we are using `gen_coverage_vector.py` as the
+simplest approach, and is well optimised C++ code
+(low memory footprint).
 
 ## Note On S3 Permissions
 

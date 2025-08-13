@@ -213,6 +213,8 @@ __marimo__/
 output/global-mosaic.pmtiles
 output/global_mosaic_error.log
 output/global-coverage.pmtiles
+output/global-coverage.pmtiles-journal
+output/global-coverage.geojson
 
 # pgstac dump
 **/**/*.dump
