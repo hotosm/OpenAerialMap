@@ -11,9 +11,7 @@ In reverse chronological order, with most recent events first.
 >         <div class="timeline-date">2025-05</div>
 >         <h3>STAC based OpenAerialMap</h3>
 >         🚀 Complete overhaul of the OAM backend, in partnership with
-
-          DevelopmentSeed.
-
+>          DevelopmentSeed.
 >         <div class="timeline-dot"></div>
 >     </div>
 >     <div class="timeline-entry">
