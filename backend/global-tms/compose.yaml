@@ -1,0 +1,57 @@
+volumes:
+  pmtiles:
+
+services:
+  # Get the latest global coverage tiles
+  get-tiles:
+    image: docker.io/alpine/curl:8.14.1
+    volumes:
+      - pmtiles:/tiles
+    command: |
+      /bin/sh -c "
+        if [ ! -f /tiles/global-coverage.pmtiles ]; then
+          echo 'Downloading global-coverage.pmtiles...'
+          curl -fSL https://s3.amazonaws.com/oin-hotosm-temp/global-coverage.pmtiles -o /tiles/global-coverage.pmtiles
+        else
+          echo 'File already exists, skipping download.'
+        fi
+      "
+
+  # Route between martin / tileserver / TiTiler eoAPI
+  nginx:
+    image: docker.io/nginx:1.29-alpine
+    ports:
+      - "8084:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      martin:
+        condition: service_healthy
+      tileserver:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Martin serves .pbf vector tiles as a XYZ/TMS server (e.g. for QGIS)
+  martin:
+    image: ghcr.io/maplibre/martin:v0.18.1
+    depends_on:
+      get-tiles:
+        condition: service_completed_successfully
+    volumes:
+      - pmtiles:/tiles
+    ports:
+      - "3004:3000"
+    command: /tiles/global-coverage.pmtiles
+    restart: unless-stopped
+
+  # Tileserver renders the vector tiles --> raster tiles, plus styling (legacy clients)
+  tileserver:
+    image: maptiler/tileserver-gl:v5.3.1
+    ports:
+      - "8080:8080"
+    volumes:
+      - pmtiles:/tiles
+      # Config picked up automatically as /data/config.json
+      - ./tileserver.config:/data/config.json:ro
+      - ./tileserver.style.config:/data/style.json:ro
+    restart: unless-stopped
