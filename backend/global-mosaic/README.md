@@ -19,7 +19,7 @@ uv sync --all-groups
 
 ## Note On Various Scripts
 
-The following scripts share a lot of code, and were developed iteratively:
+The following `scripts` share a lot of code, and were developed iteratively:
 
 - Attempt 1: `gen_mosaic_manual.py` - manually generate mosaics from COGs.
 - Attempt 2: `gen_mosaic_hybrid.py` - hybrid coverage for zooms 0-10 + mosaic
@@ -44,7 +44,7 @@ The following scripts share a lot of code, and were developed iteratively:
 
 As of 2025-08-12 we are using `gen_coverage_vector.py` as the
 simplest approach, and is well optimised C++ code
-(low memory footprint).
+(low memory footprint). **It generates tiles for zooms 0-15**.
 
 ## Note On S3 Permissions
 
