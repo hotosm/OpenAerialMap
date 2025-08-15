@@ -68,7 +68,7 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app /app
 COPY --from=tippecanoe /src/tippecanoe/tippecanoe* /usr/local/bin/
 COPY --from=tippecanoe /src/tippecanoe/tile-join /usr/local/bin/
-COPY gen_coverage_vector.py /app/gen_coverage_vector.py
+COPY scripts/gen_coverage_vector.py /app/gen_coverage_vector.py
 
 ENV PATH=/app/.venv/bin:$PATH
 
