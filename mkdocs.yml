@@ -1,0 +1,90 @@
+site_name: OpenAerialMap
+site_description: OpenAerialMap is an open service to provide access to a commons of openly licensed imagery and map layer services.
+# strict: true
+site_url: "https://docs.fmtm.dev/"
+
+repo_name: "hotosm/openaerialmap"
+repo_url: "https://github.com/hotosm/openaerialmap/"
+edit_uri: "edit/main/docs/"
+
+extra:
+  social:
+    - icon: "fontawesome/brands/github"
+      link: "https://github.com/hotosm/"
+    - icon: "fontawesome/brands/twitter"
+      link: "https://twitter.com/hotosm"
+    - icon: "fontawesome/solid/globe"
+      link: "https://www.hotosm.org"
+  copyright: Copyright &copy; 2010 HOTOSM
+  generator: false
+
+theme:
+  name: material
+  palette:
+    primary: custom
+  language: en
+  favicon: images/favicon.svg
+  logo: images/hot_logo.png
+
+extra_css:
+  - css/extra.css
+  - css/timeline.css
+
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true
+      title: Page contents
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.extra
+  - pymdownx.emoji:
+  - pymdownx.tabbed:
+      alternate_style: true
+  - mdx_truly_sane_lists
+
+plugins:
+  - search
+  - git-revision-date-localized
+  - exclude:
+      glob:
+        - plugins/*
+        - __pycache__/*
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options:
+            members_order: source
+            separate_signature: true
+            filters: ["!^_"]
+            docstring_options:
+              ignore_init_summary: true
+            merge_init_into_class: true
+
+nav:
+  - Home: index.md
+  - Get Started:
+      - About: about/about.md
+      # - Installation: INSTALL.md
+      # - Contribution Guidelines: CONTRIBUTING.md
+      - Code of Conduct: https://docs.hotosm.org/code-of-conduct
+      - FAQ: about/faq.md
+  - Developer Guide:
+      - Practices:
+          - Dev Practices: https://docs.hotosm.org/dev-practices
+          - Tech Decisions: decisions/README.md
+          - Pre-Commit: https://docs.hotosm.org/dev-guide/repo-management/pre-commit/
+          - Versioning: https://docs.hotosm.org/dev-guide/repo-management/version-control/#creating-releases
+      - Backend:
+          - dev/global-mosaic.md
+          - dev/stac-api.md
+          - dev/stac-ingester.md
+      - Frontend: dev/frontend.md
+      - Adding New Providers: dev/new-provider.md
+      - Backup Prod STAC: dev/backup-prod-pgstac.md
+  - Roadmap: https://github.com/hotosm/openaerialmap#roadmap
+  - Timeline: about/timeline.md
+  - API Docs: https://hotosm.github.io/swagger/?url=https://oam-eoapi-prod.imagery-services.k8s-prod.hotosm.org/raster/api
