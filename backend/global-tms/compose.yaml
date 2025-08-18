@@ -32,6 +32,8 @@ services:
     restart: unless-stopped
 
   # Martin serves .pbf vector tiles as a XYZ/TMS server (e.g. for QGIS)
+  # In future we would switch to this for the pre-rendered raster tiles
+  # But requires https://github.com/maplibre/martin/issues/978 first
   martin:
     image: ghcr.io/maplibre/martin:v0.18.1
     depends_on:
@@ -45,6 +47,7 @@ services:
     restart: unless-stopped
 
   # Tileserver renders the vector tiles --> raster tiles, plus styling (legacy clients)
+  # As above, this will ideally be replaced by martin in future
   tileserver:
     image: maptiler/tileserver-gl:v5.3.1
     ports:
