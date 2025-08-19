@@ -1,7 +1,7 @@
 site_name: OpenAerialMap
 site_description: OpenAerialMap is an open service to provide access to a commons of openly licensed imagery and map layer services.
 # strict: true
-site_url: "https://docs.fmtm.dev/"
+site_url: "https://docs.imagery.hotosm.org/"
 
 repo_name: "hotosm/openaerialmap"
 repo_url: "https://github.com/hotosm/openaerialmap/"
