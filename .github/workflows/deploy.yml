@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - frontend/**
 
   # Run every 2 months (approximately 60 days) at midnight UTC on the 1st
   schedule:
