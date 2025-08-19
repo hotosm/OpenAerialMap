@@ -1,16 +1,14 @@
-# NOTE disabled until we move the frontend off Github pages
+name: 📖 Publish Docs
 
-# name: 📖 Publish Docs
+on:
+  push:
+    paths:
+      - docs/**
+      - mkdocs.yml
+    branches: [main]
+  # Allow manual trigger (workflow_dispatch)
+  workflow_dispatch:
 
-# on:
-#   push:
-#     paths:
-#       - docs/**
-#       - mkdocs.yml
-#     branches: [main]
-#   # Allow manual trigger (workflow_dispatch)
-#   workflow_dispatch:
-
-# jobs:
-#   publish_docs:
-#     uses: hotosm/gh-workflows/.github/workflows/mkdocs_build.yml@3.3.2
+jobs:
+  publish_docs:
+    uses: hotosm/gh-workflows/.github/workflows/mkdocs_build.yml@3.3.2
