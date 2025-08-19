@@ -14,13 +14,21 @@ This app makes use of the environment variables found in `../.env.example`. Copy
 
 See Vite's documentation on [env variables](https://vite.dev/guide/env-and-mode.html#env-variables-and-modes).
 
-## Github Actions for CI
+## AWS S3 For Deploy
 
-Testing and deployment is taken care of by Github Actions. It is set up to:
+The deployment is:
 
-1. build and deploy the application to Github Pages on pushes to the `main` branch
-
-To make sure that the site deploys, make sure that the `pnpm-lock.yaml` file is up to date with `package.json`.
+- Handled via Justfile `deploy-frontend` script.
+- The dist is pushed to S3 bucket `oam-frontend` under path `/${GIT_BRANCH}/`.
+  - This way we host the main/stage/dev deployments in the same bucket,
+    under subpaths.
+- In advance a Cloudfront distribution is made in AWS, attached to
+  `*.hotosm.org` cert.
+- The workflow will:
+  - Build the frontend container image.
+  - Push the dist to S3.
+  - Find the Cloudfront distribution matching the S3 URL.
+  - Invalidate the cache of the cloudfront deployment in all locations.
 
 ## Linting
 
