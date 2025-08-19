@@ -94,17 +94,17 @@ deploy-frontend:
   export GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
   echo "Current branch: ${GIT_BRANCH}"
 
-  # just build-frontend ${GIT_BRANCH}
+  just build-frontend ${GIT_BRANCH}
   just get-aws-creds
 
-  # docker run --rm \
-  #   --entrypoint /bin/sh \
-  #   --env-file .aws.env \
-  #   ghcr.io/hotosm/openaerialmap/frontend:${GIT_BRANCH} \
-  #   -c "rclone config create aws s3 \
-  #         provider=AWS \
-  #         region=${AWS_REGION} \
-  #       && rclone sync ./ aws:oam-frontend/${GIT_BRANCH}"
+  docker run --rm \
+    --entrypoint /bin/sh \
+    --env-file .aws.env \
+    ghcr.io/hotosm/openaerialmap/frontend:${GIT_BRANCH} \
+    -c "rclone config create aws s3 \
+          provider=AWS \
+          region=${AWS_REGION} \
+        && rclone sync ./ aws:oam-frontend/${GIT_BRANCH}"
 
   docker run --rm \
     --entrypoint /bin/sh \
