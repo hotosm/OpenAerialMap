@@ -7,6 +7,7 @@ import vitePortScanner from './vite-plugin-port-scanner';
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
+  envDir: '../',
   server: {
     port: 9000
   },
