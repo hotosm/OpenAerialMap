@@ -10,7 +10,7 @@ There are two commands, both run via `pnpm`
 
 ### Configurations and environment variables
 
-This app makes use of the environment variables found in `../.env.template`. Copy and paste that file to a new file called `../.env` and populate the values.
+This app makes use of the environment variables found in `../.env.example`. Copy and paste that file to a new file called `../.env` and populate the values.
 
 See Vite's documentation on [env variables](https://vite.dev/guide/env-and-mode.html#env-variables-and-modes).
 

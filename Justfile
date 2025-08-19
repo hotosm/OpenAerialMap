@@ -18,6 +18,8 @@
 
 set dotenv-load
 
+mod prep 'recipes/prep/Justfile'
+
 # List available commands
 [private]
 default:
@@ -27,23 +29,37 @@ default:
 help:
   just --justfile {{justfile()}} --list
 
+# Generate the .env file from scratch, using .env.example and substitutions
 [no-cd]
-_curl:
-  #!/usr/bin/env bash
-  if ! command -v curl &> /dev/null; then
-      sudo apt-get update
-      sudo apt-get install -y curl
+generate-dotenv branch="main":
+  #!/usr/bin/env sh
+  set -e
+
+  # By default we deploy from 'main' branch, but can be overridden
+
+  cd {{justfile_directory()}}
+
+  # Re-export .env to the environment, with cleaned variables
+  if [ -f .env ]; then
+    just _echo-yellow "'.env' file already exists. Skipping dotenv generation."
+    exit 0
   fi
+
+  just manage _install_envsubst
+
+  # Generate a .env file from .env.example, substituting values from environment
+  ./envsubst -i .env.example | grep -vE '^\s*#|^\s*$' > .env
 
 # Build the frontend container image
 build-frontend branch="main":
   #!/usr/bin/env bash
   set -euo pipefail
 
-  cd {{justfile_directory()}}/frontend
+  just generate-dotenv
+  source .env
 
   GIT_BRANCH="{{ branch }}"
-  docker build . --tag "ghcr.io/hotosm/openaerialmap/frontend:${GIT_BRANCH}" \
+  docker build ./frontend --tag "ghcr.io/hotosm/openaerialmap/frontend:${GIT_BRANCH}" \
     --build-arg VITE_STAC_API_URL=${VITE_STAC_API_URL} \
     --build-arg VITE_STAC_API_PATHNAME=${VITE_STAC_API_PATHNAME} \
     --build-arg VITE_STAC_TILER_PATHNAME=${VITE_STAC_TILER_PATHNAME} \
@@ -58,7 +74,7 @@ get-aws-creds:
 
   set -euo pipefail
 
-  just _curl
+  just prep _curl
 
   # NOTE this part is specific to Github
   # Gitlab has a slightly simpler config:
