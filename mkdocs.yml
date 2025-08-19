@@ -79,9 +79,9 @@ nav:
           - Pre-Commit: https://docs.hotosm.org/dev-guide/repo-management/pre-commit/
           - Versioning: https://docs.hotosm.org/dev-guide/repo-management/version-control/#creating-releases
       - Backend:
-          - dev/global-mosaic.md
-          - dev/stac-api.md
-          - dev/stac-ingester.md
+          - dev/backend/global-mosaic.md
+          - dev/backend/stac-api.md
+          - dev/backend/stac-ingester.md
       - Frontend: dev/frontend.md
       - Adding New Providers: dev/new-provider.md
       - Backup Prod STAC: dev/backup-prod-pgstac.md
