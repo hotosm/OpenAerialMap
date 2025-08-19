@@ -119,6 +119,7 @@ deploy-frontend:
     ghcr.io/hotosm/openaerialmap/frontend:${GIT_BRANCH} \
     -c "rclone config create aws s3 \
           provider=AWS \
+          env_auth=true \
           region=${AWS_REGION} \
         && rclone sync ./ aws:oam-frontend/${GIT_BRANCH}"
 
