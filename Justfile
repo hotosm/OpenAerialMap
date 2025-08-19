@@ -113,17 +113,17 @@ deploy-frontend:
   just build-frontend ${GIT_BRANCH}
   just get-aws-creds
 
-  # echo "Uploading to dist to aws:oam-frontend/${GIT_BRANCH}..."
-  # docker run --rm \
-  #   --entrypoint /bin/sh \
-  #   --env-file .aws.env \
-  #   ghcr.io/hotosm/openaerialmap/frontend:${GIT_BRANCH} \
-  #   -c "rclone config create aws s3 \
-  #         provider=AWS \
-  #         env_auth=true \
-  #         region=${AWS_REGION} \
-  #       && rclone sync ./ aws:oam-frontend/${GIT_BRANCH}"
-  # echo "Upload done."
+  echo "Uploading to dist to aws:oam-frontend/${GIT_BRANCH}..."
+  docker run --rm \
+    --entrypoint /bin/sh \
+    --env-file .aws.env \
+    ghcr.io/hotosm/openaerialmap/frontend:${GIT_BRANCH} \
+    -c "rclone config create aws s3 \
+          provider=AWS \
+          env_auth=true \
+          region=${AWS_REGION} \
+        && rclone sync ./ aws:oam-frontend/${GIT_BRANCH}"
+  echo "Upload done."
 
   echo "Invalidating cloudfront cache..."
   docker run --rm \
@@ -136,7 +136,7 @@ deploy-frontend:
         --output text)
 
       echo "Found cloudfront distribution ${cf_dist_id}"
-      # aws cloudfront create-invalidation --distribution-id $cf_dist_id --paths "/${GIT_BRANCH}*"
+      aws cloudfront create-invalidation --distribution-id $cf_dist_id --paths "/${GIT_BRANCH}/*"
     '
   echo "Cloudfront config done."
 
