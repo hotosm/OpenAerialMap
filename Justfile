@@ -102,7 +102,7 @@ get-aws-creds:
   echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> .aws.env
   echo "AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN" >> .aws.env
 
-# Deploy the frontend to S3 and CDN
+# Deploy the frontend to S3 and CDN (in Github workflow)
 deploy-frontend:
   #!/usr/bin/env bash
   set -euo pipefail
@@ -113,21 +113,32 @@ deploy-frontend:
   just build-frontend ${GIT_BRANCH}
   just get-aws-creds
 
-  docker run --rm \
-    --entrypoint /bin/sh \
-    --env-file .aws.env \
-    ghcr.io/hotosm/openaerialmap/frontend:${GIT_BRANCH} \
-    -c "rclone config create aws s3 \
-          provider=AWS \
-          env_auth=true \
-          region=${AWS_REGION} \
-        && rclone sync ./ aws:oam-frontend/${GIT_BRANCH}"
+  # echo "Uploading to dist to aws:oam-frontend/${GIT_BRANCH}..."
+  # docker run --rm \
+  #   --entrypoint /bin/sh \
+  #   --env-file .aws.env \
+  #   ghcr.io/hotosm/openaerialmap/frontend:${GIT_BRANCH} \
+  #   -c "rclone config create aws s3 \
+  #         provider=AWS \
+  #         env_auth=true \
+  #         region=${AWS_REGION} \
+  #       && rclone sync ./ aws:oam-frontend/${GIT_BRANCH}"
+  # echo "Upload done."
 
+  echo "Invalidating cloudfront cache..."
   docker run --rm \
     --entrypoint /bin/sh \
     --env-file .aws.env \
     public.ecr.aws/aws-cli/aws-cli:2.28.11 \
-    -c "aws s3 ls oam-frontend"
+    -c '
+      cf_dist_id=$(aws cloudfront list-distributions \
+        --query "DistributionList.Items[?contains(Origins.Items[].DomainName, '\''oam-frontend.s3.amazonaws.com'\'')].Id | [0]" \
+        --output text)
+
+      echo "Found cloudfront distribution ${cf_dist_id}"
+      # aws cloudfront create-invalidation --distribution-id $cf_dist_id --paths "/${GIT_BRANCH}*"
+    '
+  echo "Cloudfront config done."
 
 # Echo to terminal with blue colour
 [no-cd]
