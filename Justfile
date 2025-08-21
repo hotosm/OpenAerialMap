@@ -60,7 +60,7 @@ build-frontend branch="main":
   set -euo pipefail
 
   just generate-dotenv
-  # Export to env for build (FIXME this does not work as expected!)
+  # Export to env for build
   export $(grep -v '^#' .env | xargs)
 
   GIT_BRANCH="{{ branch }}"
@@ -135,14 +135,18 @@ deploy-frontend:
     --entrypoint /bin/sh \
     --env-file .aws.env \
     public.ecr.aws/aws-cli/aws-cli:2.28.11 \
-    -c '
-      cf_dist_id=$(aws cloudfront list-distributions \
-        --query "DistributionList.Items[?contains(Origins.Items[].DomainName, '\''oam-frontend.s3.amazonaws.com'\'')].Id | [0]" \
+docker run --rm \
+  --entrypoint /bin/sh \
+  --env-file .aws.env \
+  public.ecr.aws/aws-cli/aws-cli:2.28.11 \
+    -c "
+      cf_dist_id=\$(aws cloudfront list-distributions \
+        --query 'DistributionList.Items[?contains(Origins.Items[].DomainName, '\''oam-frontend.s3.amazonaws.com'\'')].Id | [0]' \
         --output text)
 
-      echo "Found cloudfront distribution ${cf_dist_id}"
-      aws cloudfront create-invalidation --distribution-id $cf_dist_id --paths "/${GIT_BRANCH}/*"
-    '
+      echo \"Found cloudfront distribution \$cf_dist_id\"
+      aws cloudfront create-invalidation --distribution-id \$cf_dist_id --paths \"/${GIT_BRANCH}/*\"
+    "
   echo "Cloudfront config done."
 
 # Echo to terminal with blue colour
