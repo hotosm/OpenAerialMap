@@ -87,4 +87,4 @@ nav:
       - Backup Prod STAC: dev/backup-prod-pgstac.md
   - Roadmap: https://github.com/hotosm/openaerialmap#roadmap
   - Timeline: about/timeline.md
-  - API Docs: https://hotosm.github.io/swagger/?url=https://oam-eoapi-prod.imagery-services.k8s-prod.hotosm.org/raster/api
+  - API Docs: https://hotosm.github.io/swagger/?url=https://api.imagery.hotosm.org/raster/api
