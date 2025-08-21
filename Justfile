@@ -60,7 +60,8 @@ build-frontend branch="main":
   set -euo pipefail
 
   just generate-dotenv
-  source .env
+  # Export to env for build
+  export $(grep -v '^#' .env | xargs)
 
   GIT_BRANCH="{{ branch }}"
   docker build ./frontend --tag "ghcr.io/hotosm/openaerialmap/frontend:${GIT_BRANCH}" \
