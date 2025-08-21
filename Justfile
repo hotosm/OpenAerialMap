@@ -57,11 +57,11 @@ generate-dotenv branch="main":
 # Build the frontend container image
 build-frontend branch="main":
   #!/usr/bin/env bash
-  set -euo pipefail
+  # Note we set -a here to export sourced vars
+  set -euoa pipefail
 
   just generate-dotenv
-  # Export to env for build
-  export $(grep -v '^#' .env | xargs)
+  source .env
 
   GIT_BRANCH="{{ branch }}"
   docker build ./frontend --tag "ghcr.io/hotosm/openaerialmap/frontend:${GIT_BRANCH}" \
