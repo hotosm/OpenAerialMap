@@ -60,7 +60,7 @@ build-frontend branch="main":
   set -euo pipefail
 
   just generate-dotenv
-  # Export to env for build
+  # Export to env for build (FIXME this does not work as expected!)
   export $(grep -v '^#' .env | xargs)
 
   GIT_BRANCH="{{ branch }}"
