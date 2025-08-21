@@ -1,0 +1,11 @@
+apiVersion: v2
+name: global-tms
+description: A combined raster TMS of OAM imagery, for legacy clients
+type: application
+icon: https://raw.githubusercontent.com/hotosm/openaerialmap/refs/heads/main/docs/images/favicon.svg
+
+# Chart version
+version: 0.1.0
+
+# App version
+appVersion: "0.1.0"
