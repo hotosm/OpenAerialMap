@@ -135,10 +135,6 @@ deploy-frontend:
     --entrypoint /bin/sh \
     --env-file .aws.env \
     public.ecr.aws/aws-cli/aws-cli:2.28.11 \
-docker run --rm \
-  --entrypoint /bin/sh \
-  --env-file .aws.env \
-  public.ecr.aws/aws-cli/aws-cli:2.28.11 \
     -c "
       cf_dist_id=\$(aws cloudfront list-distributions \
         --query 'DistributionList.Items[?contains(Origins.Items[].DomainName, '\''oam-frontend.s3.amazonaws.com'\'')].Id | [0]' \
