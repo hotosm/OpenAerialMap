@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chart.fullname" . }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}{{ toYaml . | nindent 8 }}{{- end }}
+      labels:
+        {{- include "chart.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}{{ toYaml . | nindent 8 }}{{- end }}
+    spec:
+      serviceAccountName: {{ include "chart.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: get-tiles
+          image: {{ .Values.initContainer.image }}
+          command: [ "sh", "-c" ]
+          args:
+            - |
+              if [ ! -f /tiles/{{ .Values.initContainer.filename }} ]; then
+                echo "Downloading tiles..."
+                curl -fSL {{ .Values.initContainer.url }} -o /tiles/{{ .Values.initContainer.filename }}
+              else
+                echo "File exists, skipping"
+              fi
+          volumeMounts:
+            - name: global-coverage-pmtiles
+              mountPath: /tiles
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe: {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe: {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{- with .Values.resources }}
+          resources: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: global-coverage-pmtiles
+              mountPath: /tiles
+            - name: config
+              mountPath: /data/config.json
+              subPath: config.json
+            - name: style
+              mountPath: /data/style.json
+              subPath: style.json
+            {{- with .Values.volumeMounts }}
+            {{ toYaml . | nindent 12 }}
+            {{- end }}
+        - name: {{ .Chart.Name }}-nginx
+          image: nginx:1.29-alpine
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: nginx.conf
+      volumes:
+        - name: global-coverage-pmtiles
+          persistentVolumeClaim:
+            claimName: {{ include "chart.fullname" . }}-pvc
+        - name: config
+          configMap:
+            name: {{ include "chart.fullname" . }}-config
+        - name: style
+          configMap:
+            name: {{ include "chart.fullname" . }}-style
+        - name: nginx-conf
+          configMap:
+            name: {{ include "chart.fullname" . }}-nginx
+        {{- with .Values.volumes }}
+        {{ toYaml . | nindent 8 }}
+        {{- end }}

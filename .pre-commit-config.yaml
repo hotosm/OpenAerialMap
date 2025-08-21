@@ -52,6 +52,7 @@ repos:
             --no-error-on-unmatched-pattern,
             "!CHANGELOG.md",
             "!frontend/pnpm-lock.yaml",
+            "!backend/global-tms/chart/**",
           ]
 
   # # Lint: Dockerfile (disabled until binary is bundled)

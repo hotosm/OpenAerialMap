@@ -1,0 +1,12 @@
+1. Tileserver and NGINX sidecar have been deployed.
+2. You can access raster tiles (zoom 0–15) via your Ingress:
+
+   http://{{ .Values.ingress.host }}/<z>/<x>/<y>.png
+
+   Example:
+     curl http://{{ .Values.ingress.host }}/10/511/340.png -o tile.png
+
+   Zoom levels >=16 will automatically redirect to the external TiTiler service.
+
+3. Health check endpoint is available at:
+   http://{{ .Values.ingress.host }}/health

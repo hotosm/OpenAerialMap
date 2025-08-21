@@ -42,6 +42,8 @@ generate-dotenv branch="main":
   # Re-export .env to the environment, with cleaned variables
   if [ -f .env ]; then
     just _echo-yellow "'.env' file already exists. Skipping dotenv generation."
+    echo ".env file content:"
+    cat .env
     exit 0
   fi
 
@@ -49,6 +51,8 @@ generate-dotenv branch="main":
 
   # Generate a .env file from .env.example, substituting values from environment
   ./envsubst -i .env.example | grep -vE '^\s*#|^\s*$' > .env
+  echo ".env file content:"
+  cat .env
 
 # Build the frontend container image
 build-frontend branch="main":
