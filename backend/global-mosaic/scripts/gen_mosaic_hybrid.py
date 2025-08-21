@@ -64,7 +64,7 @@ if not PG_DSN:
 COLLECTION = os.getenv("COLLECTION", "openaerialmap")
 TILE_URL_TEMPLATE = os.getenv(
     "TILE_URL_TEMPLATE",
-    "https://oam-eoapi-prod.imagery-services.k8s-prod.hotosm.org/raster/collections"
+    "https://api.imagery.hotosm.org/raster/collections"
     "/{collection}/tiles/WebMercatorQuad/{z}/{x}/{y}.png?assets=visual&bidx=1&bidx=2&bidx=3",
 )
 
